@@ -28,13 +28,9 @@ class RecobHits(Base):
             if plane is not None and len(branch) > 1:
                 # select the branch based on the plane label supplied
                 branch = next(br for br in branch if str.lower(plane) in str.lower(br))
-                print(branch)
                 self.branch = branch + "obj."
             else:
-                print(branch)
                 self.branch = branch[0] + "obj."
-
-            print(branch)
 
     @classmethod
     def with_branch(cls, plane, branchname):
