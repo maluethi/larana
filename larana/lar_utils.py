@@ -5,6 +5,8 @@ from matplotlib.collections import LineCollection
 import matplotlib.patches as patches
 from matplotlib import gridspec
 
+import ROOT
+
 import types
 from collections import namedtuple
 
@@ -306,6 +308,38 @@ def write_to_root(tracks, laser):
     laser_tree.write()
 
     f.close()
+
+
+def get_histos(filename):
+    """ Read root file containing output of LaserFieldCalib  """
+    dist_map = namedtuple("dist_map", "x y z")
+    axes = ['X', 'Y', 'Z']
+    maps = []
+    for ax in axes:
+        rfile = ROOT.TFile(filename)
+        hist = rfile.Get('Reco_Displacement_' + ax)
+        histo = rn.hist2array(hist)
+        maps.append(histo)
+    return dist_map(*maps)
+
+
+def make_array(histos):
+    """ Convert the histos from FieldCalib input to a nice numpy array """
+    histo_shape = histos.x.shape
+    distortion = np.zeros(histo_shape, dtype=[('dx', np.float), ('dy', np.float), ('dz', np.float)])
+    distortion[:, :, :]['dx'] = histos.x
+    distortion[:, :, :]['dy'] = histos.y
+    distortion[:, :, :]['dz'] = histos.z
+
+    return distortion
+
+def filter_max(distortion, threshold=100000.):
+    """ Resetting field distortion map values above certain value to 0 """
+    for dir in ['dx', 'dy', 'dz']:
+        idx = np.where(distortion[dir] > threshold)
+        for x,y,z in zip(idx[0], idx[1], idx[2]):
+            distortion[x,y,z][dir] = 0
+    return distortion.view(np.recarray)
 
 
 def find_unique_polar(angles, digits=2):
