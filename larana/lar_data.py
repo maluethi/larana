@@ -40,7 +40,6 @@ class LarData(object):
 
     def read_hits(self, planes=None):
         recodef = RecobHits.with_branch(planes, self.find_product("recob::Hits"))
-        print(recodef.channel())
         hit_branches = [recodef.channel(), recodef.peak_time(), recodef.peak_amplitude(), recodef.start_tick(),
                         recodef.end_tick(), recodef.wire(), recodef.plane(), recodef.integral()]
         self.hits = self.read(recodef.tree, hit_branches)
