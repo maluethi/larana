@@ -18,6 +18,7 @@ box = namedtuple("box", "x_min x_max y_min y_max z_min z_max")
 
 TPC = box(TPC_LIMITS[0][0], TPC_LIMITS[0][1], TPC_LIMITS[1][0], TPC_LIMITS[1][1], TPC_LIMITS[2][0], TPC_LIMITS[2][1])
 
+
 def correct(track):
     return 'track {} is ok'.format(track)
 
@@ -33,6 +34,7 @@ def plot_track(x, y, z, axes, **kwargs):
     ax_zx.scatter(z, x, **kwargs)
     ax_zy.scatter(z, y, **kwargs)
     ax_xy.scatter(x, y, **kwargs)
+
 
 def plot_endpoints(x, y, z, axes, laser=[], **kwargs):
     ax_zx, ax_zy, ax_xy = axes
@@ -57,18 +59,16 @@ def plot_endpoints(x, y, z, axes, laser=[], **kwargs):
             print("outside")
 
 
-
-
 def plot_lines(lines, axes, colors=None):
-    ''' this is plotting each line collection on the respective axes, so both arguments should have the
-     same size. '''
+    """ this is plotting each line collection on the respective axes, so both arguments should have the
+     same size. """
     if lines is None:
         return
     if colors is not None:
         colors = [cmap[col] for col in colors]
 
     for line_collection, ax in zip(lines, axes):
-        ax.add_collection(LineCollection(line_collection, linewidths=(1), linestyles='solid', colors=colors))
+        ax.add_collection(LineCollection(line_collection, linewidths=1, linestyles='solid', colors=colors))
 
 
 def assemble_lines(laser_data):
@@ -132,6 +132,7 @@ def set_tpc_limits(axes):
     ax_xy.set_xlabel("x [cm]")
     ax_xy.set_ylabel("y [cm]")
 
+
 def plot_tpc_box(axes):
     ax_zx, ax_zy, ax_xy = axes
 
@@ -146,7 +147,6 @@ def plot_tpc_box(axes):
     ax_xy.add_patch(xy_patch)
 
 
-
 def sync_y_with_x(self, event):
     self.set_xlim(event.get_ylim(), emit=False)
 
@@ -156,14 +156,14 @@ def sync_x_with_y(self, event):
 
 
 def calc_line(point1, point2):
-    '''' Calculate the two parameters of a line base on the two supplied points '''
+    """ Calculate the two parameters of a line base on the two supplied points """
     m = (point2[1] - point1[1]) / (point2[0] - point1[0])
     b = point1[1] - m * point1[0]
     return m, b
 
 
 def calc_line_slope(point, slope):
-    ''' Calculate two parameters of a line based on a point and its slope'''
+    """ Calculate two parameters of a line based on a point and its slope """
     b = point[1] - slope * point[0]
     return slope, b
 
@@ -182,7 +182,7 @@ def endpoint_inside(laser_track):
     x, y, z = laser_track
 
     closest = np.argmin(z)
-    first_point = [el[closest] for el in [x,y,z]]
+    first_point = [el[closest] for el in [x, y, z]]
     return in_tpc(first_point)
 
 
@@ -201,7 +201,7 @@ def in_tpc(point, ignore_x=True):
 
 # reading
 def find_tree(tree_to_look_for, filename):
-    ''' Find argument tree name that contains Track Information '''
+    """ Find argument tree name that contains Track Information """
     trees = rn.list_trees(filename)
     try:
         track_tree = next(tree for tree in trees if tree_to_look_for.lower() in tree.lower())
@@ -212,7 +212,7 @@ def find_tree(tree_to_look_for, filename):
 
 
 def get_branches(filename, treename, vectors=None):
-    ''' function that returns the appropriate branch string in a branch for the specified vectors of the branch  '''
+    """ function that returns the appropriate branch string in a branch for the specified vectors of the branch  """
     if vectors is None:
         return rn.list_branches(filename, treename=treename)
 
@@ -268,7 +268,7 @@ def disassemble_laser(laser):
 
 
 def write_to_root(tracks, laser):
-    ''' Writes tracks and laser data to a root file which is readable by the reconstruction algorithm '''
+    """ Writes tracks and laser data to a root file which is readable by the reconstruction algorithm """
     from rootpy.vector import Vector3
     import rootpy.stl as stl
 
@@ -333,6 +333,7 @@ def make_array(histos):
 
     return distortion
 
+
 def filter_max(distortion, threshold=100000.):
     """ Resetting field distortion map values above certain value to 0 """
     for dir in ['dx', 'dy', 'dz']:
@@ -343,12 +344,13 @@ def filter_max(distortion, threshold=100000.):
 
 
 def find_unique_polar(angles, digits=2):
-    ''' Finds unique entries in an array of angles '''
+    """ Finds unique entries in an array of angles """
     return np.unique(np.round(angles, decimals=digits))
 
 
 def find_unique_polar_idx(laser_data, precision=0.01):
-    ''' Returns all indices associate with a certain angle of the recorded laser track (can vary on the precision used) '''
+    """ Returns all indices associate with a certain angle of the recorded laser track
+    (can vary on the precision used) """
     angles = [laser[8] for laser in laser_data]
     horizontal_scans_slices = []
     for polar in find_unique_polar(angles):
