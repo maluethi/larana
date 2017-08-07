@@ -3,16 +3,19 @@ from . base import Base
 
 class Laseref(Base):
 
-    def __init__(self):
+    def __init__(self, branch=None):
         super(Laseref, self).__init__()
         self.data_product = "Laser Data"
         self.tree = "Events"
-        self.product = "LaserBeam"
-        self.producer = "RecoDataMinimal"
 
-        self.producer = "LaserHitAna"
-        # self.branch = "lasercal::LaserBeam_LaserMerger_LaserBeam_" + self.producer + ".obj."
-        self.branch = "lasercal::LaserBeam_LaserDataMerger_LaserBeam_" + self.producer + ".obj."
+        if branch is None:
+            self.producer = "LaserHitAna"
+            # self.branch = "lasercal::LaserBeam_LaserMerger_LaserBeam_" + self.producer + ".obj."
+
+            self.branch = "lasercal::LaserBeam_LaserDataMerger_LaserBeam_" + self.producer + ".obj."
+        else:
+            self.branch = branch[0] + ".obj."
+
         self.XYZ = ["X", "Y", "Z"]
 
     def pos(self):
