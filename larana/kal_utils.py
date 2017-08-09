@@ -21,17 +21,23 @@ def get_x_width(df,event, plane):
     return time_to_distance(width, offset=0)
 
 def choose_nearest(array, value):
-    ''' Chooses the closest entry in the supplied array to value.
-    If two values are identical, return the first entry.'''
+    """ Chooses the closest entry in the supplied array to value.
+    If two values are identical, return the first entry."""
     idx = (np.abs(array-value)).argmin()
     return idx, array[idx]
 
 def check_multiplicity(array):
-    ''' checks how many entries in the input array are identical
-    to the first entry starting at the first entry.  '''
+    """ checks how many entries in the input array are identical
+    to the first entry starting at the first entry.  """
     idx = 0
+
+    if len(array) == 1:
+        return False, idx
+
     while array[idx] == array[idx+1]:
-        idx = idx + 1
+        idx += 1
+        if idx + 1 == len(array):
+            break
 
     if idx == 0:
         return False, idx

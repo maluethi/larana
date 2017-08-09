@@ -21,6 +21,18 @@ class TestMultiplicity(object):
         assert(flag == True)
         assert(n == 8)
 
+    def test_short(self):
+        a = np.array([1])
+        flag, n = check_multiplicity(a)
+        assert(flag == False)
+        assert(n == 0)
+
+    def test_single_values(self):
+        a = np.array([1,1,1,1])
+        flag, n = check_multiplicity(a)
+        assert(flag == True)
+        assert(n == 3)
+
 
 class TestChooseNearest(object):
     def test_simple(self):
@@ -43,4 +55,11 @@ class TestChooseNearest(object):
         idx, val = choose_nearest(a, val)
         assert(idx == 0)
         assert(val == 1.)
+
+    def test_negative_vals(self):
+        a = np.array([-1., 2., 3.])
+        val = 0.
+        idx, val = choose_nearest(a, val)
+        assert(idx == 0)
+        assert(val == -1.)
 
