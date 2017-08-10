@@ -89,14 +89,19 @@ def assemble_lines(laser_data):
     return [zx_laser_lines, zy_laser_lines, xy_laser_lines]
 
 
-def make_figure(tpc_limits=True, tpc_box=False):
+def make_figure(tpc_limits=True, tpc_box=False, link_axes=True):
     fig = plt.figure(figsize=(8, 5.), dpi=160)
 
     gs = gridspec.GridSpec(3, 3)
 
+    if link_axes:
+        ax_zy = fig.add_subplot(gs[1, :], sharex=ax_zx)
+        ax_xy = fig.add_subplot(gs[2, 0], sharey=ax_zy)
+    else:
+        ax_zy = fig.add_subplot(gs[1, :])
+        ax_xy = fig.add_subplot(gs[2, 0])
+
     ax_zx = fig.add_subplot(gs[0, :])
-    ax_zy = fig.add_subplot(gs[1, :], sharex=ax_zx)
-    ax_xy = fig.add_subplot(gs[2, 0], sharey=ax_zy)
 
     axes = [ax_zx, ax_zy, ax_xy]
     if tpc_limits:
@@ -105,11 +110,12 @@ def make_figure(tpc_limits=True, tpc_box=False):
     if tpc_box:
         plot_tpc_box(axes)
 
-    ax_xy.update_xlim = types.MethodType(sync_y_with_x, ax_xy)
-    ax_zy.update_ylim = types.MethodType(sync_x_with_y, ax_zx)
+    if link_axes:
+        ax_xy.update_xlim = types.MethodType(sync_y_with_x, ax_xy)
+        ax_zy.update_ylim = types.MethodType(sync_x_with_y, ax_zx)
 
-    ax_zx.callbacks.connect("ylim_changed", ax_xy.update_xlim)
-    ax_xy.callbacks.connect("xlim_changed", ax_zy.update_ylim)
+        ax_zx.callbacks.connect("ylim_changed", ax_xy.update_xlim)
+        ax_xy.callbacks.connect("xlim_changed", ax_zy.update_ylim)
 
     return fig, axes
 
