@@ -27,7 +27,7 @@ class LarData(object):
         self.ids = rn.root2array(self.file, treename=metadata.tree, branches="EventAuxiliary.id_.event_")
 
     def read_laser(self):
-        laserdefs = Laseref()
+        laserdefs = Laseref(branch=self.find_product("lasercal::LaserBeam"))
         tree = laserdefs.tree
         branches = [laserdefs.pos(),
                     laserdefs.dir(),
@@ -110,3 +110,37 @@ class LarData(object):
         for tree in trees:
             print(str.capitalize(tree) + ":")
             print(rn.list_branches(self.file, treename=tree))
+
+
+def get_plane_idx(dt, plane_id):
+    if plane_id < 0 or plane_id > 2:
+        raise ValueError("plane must be 0,1 or 2, it was {}".format(plane_id))
+    return np.where(dt == plane_id)
+
+
+def get_tick(dt, eventid, plane):
+    hit = dt.get_hits(eventid)
+    return hit.tick[get_plane_idx(hit.plane, plane)]
+
+
+def get_wire(dt, eventid, plane):
+    hit = dt.get_hits(eventid)
+    return hit.wire[get_plane_idx(hit.plane, plane)]
+
+
+def get_ampl(dt, eventid, plane):
+    hit = dt.get_hits(eventid)
+    return hit.peak_amp[get_plane_idx(hit.plane, plane)]
+
+
+def get_integral(dt, eventid, plane):
+    hit = dt.get_hits(eventid)
+    return hit.integral[get_plane_idx(hit.plane, plane)]
+
+
+def get_width(dt, eventid, plane):
+    hit = dt.get_hits(eventid)
+    start_tick = hit.start_tick[get_plane_idx(hit.plane, plane)]
+    end_tick = hit.end_tick[get_plane_idx(hit.plane, plane)]
+
+    return end_tick - start_tick
