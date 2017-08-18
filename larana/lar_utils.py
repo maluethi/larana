@@ -17,7 +17,7 @@ TPC_LIMITS = [[0, 256], [-116.38, 116.38], [0, 1036.8]]
 box = namedtuple("box", "x_min x_max y_min y_max z_min z_max")
 
 TPC = box(TPC_LIMITS[0][0], TPC_LIMITS[0][1], TPC_LIMITS[1][0], TPC_LIMITS[1][1], TPC_LIMITS[2][0], TPC_LIMITS[2][1])
-
+WIRE = box(0, 256, -115.505, 117.153, 0.25, 1036.45)
 
 def correct(track):
     return 'track {} is ok'.format(track)
@@ -94,6 +94,8 @@ def make_figure(tpc_limits=True, tpc_box=False, link_axes=True):
 
     gs = gridspec.GridSpec(3, 3)
 
+    ax_zx = fig.add_subplot(gs[0, :])
+
     if link_axes:
         ax_zy = fig.add_subplot(gs[1, :], sharex=ax_zx)
         ax_xy = fig.add_subplot(gs[2, 0], sharey=ax_zy)
@@ -101,7 +103,6 @@ def make_figure(tpc_limits=True, tpc_box=False, link_axes=True):
         ax_zy = fig.add_subplot(gs[1, :])
         ax_xy = fig.add_subplot(gs[2, 0])
 
-    ax_zx = fig.add_subplot(gs[0, :])
 
     axes = [ax_zx, ax_zy, ax_xy]
     if tpc_limits:
