@@ -40,28 +40,76 @@ def get_tpc_intersection(point, direction, box=None):
     return [entry, exit]
 
 class Laser:
-    tup = namedtuple('touple', 'polar, azimu')
-    LASER_DEG_OFFSETS = {1: tup(0, 0),  # polar, azimuth
-                         2: tup(0, 0)}
+    tup = namedtuple('tuple', 'polar, azimu')
+
     steps_deg = tup(0.000178683, 0.00008064)
+
+    _polar_tick_length = 0.00001
+    _polar_linear2deg = 0.3499  # mm/deg
+
+    # for now (LCS2):
+    _z_observed = 171.5 # TODO: Make this more accurate and get error
+    _y_observed = 6.1   # TODO: Make this more accurate and get error
+    _azimu_apparent_angle = 155.46600348
+    _azimu_true_ange = np.rad2deg(np.tan(LASER_POS[2][0] / (LASER_POS[2][2] - _z_observed)))
+
+    _polar_true_angle = np.rad2deg(np.tan(_y_observed / (LASER_POS[2][2] - _z_observed)))
+    _polar_apparent_ticks = 10402809
+    _polar_apparent = _polar_tick_length * _polar_apparent_ticks / _polar_linear2deg
+
+    LASER_DIR = {1: 1,
+                 2: tup(1, -1)}
+
+    LASER_DEG_OFFSETS = {1: tup(0, 0),  # polar, azimuth
+                         2: tup((_polar_apparent - _polar_true_angle), (_azimu_apparent_angle + _azimu_true_ange))}
 
     def __init__(self, laser_id):
         self.laser_id = laser_id
 
-    def polar_abs_deg2steps(self, deg):
-        if deg > 180 or deg < 0:
-            raise ValueError("polar angle is out of boundaries [0, 180], value was " + str(deg))
+        self.laser_deg_offset = self.LASER_DEG_OFFSETS[laser_id]
+        self.laser_dir = self.LASER_DIR[laser_id]
 
-        return int(1 / self.steps_deg.polar * (deg - self.LASER_DEG_OFFSETS[self.laser_id].polar))
+    def polar_tick2laser(self, tick):
+        raw = self.polar_tick2raw(tick)
+        return self.polar_raw2laser(raw)
 
-    def polar_deg2steps(self, deg):
-        return int(deg / self.steps_deg.polar)
+    def polar_laser2tick(self, laser):
+        raw = self.polar_laser2raw(laser)
+        return self.polar_raw2tick(raw)
 
-    def azimu_abs_deg2steps(self, deg):
-        return int(1 / -self.steps_deg.azimu * (deg - self.LASER_DEG_OFFSETS[self.laser_id].azimu))
+    def laser2raw(self, polar, azimu):
+        """ Converts angles seen in laser coordinates into raw coordinates """
+        return [self.polar_laser2raw(polar), self.azimu_laser2raw(azimu)]
+
+    def azimu_laser2raw(self, deg):
+        raw = self.laser_dir.azimu * deg + self.laser_deg_offset.azimu
+        return raw
+
+    def azimu_raw2laser(self, raw):
+        deg = (raw - self.laser_deg_offset.azimu) / self.laser_dir.azimu
+        return deg
+
+    def polar_laser2raw(self, deg):
+        raw = self.laser_dir.polar * deg + self.laser_deg_offset.polar
+        return raw
+
+    def polar_raw2laser(self, raw):
+        laser = (raw - self.laser_deg_offset.polar) / self.laser_dir.polar
+        return laser
+
+    def azimu_raw2ticks(self, deg):
+        pass
+
+    def polar_tick2raw(self, tick):
+        deg = tick * self._polar_tick_length / self._polar_linear2deg
+        return deg
+
+    def polar_raw2tick(self, raw):
+        tick = raw * self._polar_linear2deg / self._polar_tick_length
+        return int(tick)
 
     def azimu_deg2steps(self, deg):
-        return dir[1] * int(deg / self.steps_deg.azimu)
+        return int(deg / self.steps_deg.azimu)
 
     def power2steps(self):
         pass
