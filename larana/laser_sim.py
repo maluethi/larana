@@ -45,7 +45,7 @@ def convert_to_raw(azimu, polar, laser_id):
     return [azi_raw, pol_raw]
 
 
-def gen_laserfile(filename, azimu_angles, polar_angles, laser_id):
+def gen_laserfile(filename, raw_data, laser_id):
     fields = ['LaserSystem', 'Status', 'RotaryPosition', 'LinearPosition', 'AttenuatorPosition', 'AperturePosition',
               'TriggerTimeSec', 'TriggerTimeUsec', 'TriggerCount', 'RunControlStep', 'LaserShotCounter',
               'MirrorBoxAxis1', 'MirrorBoxAxis2', 'MirrorFeedthroughAxis1', 'MirrorFeedthroughAxis2']
@@ -53,10 +53,11 @@ def gen_laserfile(filename, azimu_angles, polar_angles, laser_id):
     laser_data = namedtuple("ld", fields)
     laser_data.__new__.__defaults__ = defaults
 
-    forma = 1 * "{} " + 13 * "{:0.1f} " + "{:0.1f}"
+    forma = 2 * "{} " + "{:0.4f} " + 11 * "{:0.1f} " + "{:0.1f}"
 
     with open(filename, 'w') as laserfile:
-        for evt, (azimu, polar) in enumerate(zip(azimu_angles, polar_angles)):
+        for evt, raw in enumerate(raw_data):
+            polar, azimu = raw
             las = laser_data(TriggerCount=evt,
                              LaserSystem=laser_id,
                              RotaryPosition=azimu,
