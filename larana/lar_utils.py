@@ -36,6 +36,16 @@ def plot_track(x, y, z, axes, **kwargs):
     ax_xy.scatter(x, y, **kwargs)
 
 
+def plot_edges(axes, start, end, kwargs=None):
+    if kwargs is None:
+        axes[0].plot([start[2], end[2]], [start[0], end[0]], '-*')
+        axes[1].plot([start[2], end[2]], [start[1], end[1]], '-*')
+        axes[2].plot([start[0], end[0]], [start[1], end[1]], '-*')
+    else:
+        axes[0].plot([start[2], end[2]], [start[0], end[0]], **kwargs)
+        axes[1].plot([start[2], end[2]], [start[1], end[1]], **kwargs)
+        axes[2].plot([start[0], end[0]], [start[1], end[1]], **kwargs)
+
 def plot_endpoints(x, y, z, axes, laser=[], **kwargs):
     ax_zx, ax_zy, ax_xy = axes
 
