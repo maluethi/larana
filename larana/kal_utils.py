@@ -106,10 +106,24 @@ def nearest_wire(point_ub, return_start=False, plane=None):
         ind1_closest_idx += len(v_botm_wires)
 
     col_closest_idx = np.searchsorted(y_botm_wires, z)
+
+    # handle corner cases
+    if col_closest_idx >= len(y_botm_wires):
+        if z - 0.6 < WIRE.z_max:
+            col_closest_idx -= 1
+        else:
+            raise ValueError("point is outside wire reach (downstream)")
+    if col_closest_idx == 0:
+        if z + 0.6 < WIRE.z_min:
+            col_closest_idx += 1
+        else:
+            pass
+            #raise ValueError("point is outside wire reach (upstream)")
+
     col_closest_start = [WIRE.y_min, y_botm_wires[col_closest_idx]]
 
     if not return_start:
-        return col_closest_idx, ind0_closest_idx, ind1_closest_idx
+        return ind0_closest_idx, ind1_closest_idx, col_closest_idx
     else:
         return col_closest_idx, col_closest_start, \
                ind0_closest_idx, ind0_closest_start, \
