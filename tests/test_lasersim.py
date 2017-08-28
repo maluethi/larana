@@ -27,10 +27,12 @@ class TestFiles:
         p = tmpdir.join("test.txt")
         azimu = [0, 1, 2, 3, 4]
         polar = [0, 1, 2, 3, 4]
+        test_data = np.vstack([azimu, polar]).T
+
         laser_id = 1
-        gen_laserfile(str(p), azimu, polar, laser_id)
+        gen_laserfile(str(p), test_data, laser_id)
 
         with open(str(p)) as testfile:
             for idx, line in enumerate(testfile.readlines()):
                 assert(int(line[0]) == laser_id)
-                assert(int(line[6]) == idx)
+                assert(int(line[4]) == idx)
