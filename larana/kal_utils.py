@@ -18,9 +18,8 @@ u_btom_wires = np.arange(WIRE.z_min, WIRE.z_max, ind_wire_spacing_btom)
 v_side_wires = u_side_wires
 v_botm_wires = u_btom_wires
 
-
 def time_to_distance(ticks, offset=3200, sampling=500, field=75):
-    drift_speed = 0.75 * 10000 # cm / nsec
+    drift_speed = 0.75 * 10000  # cm / nsec
     return (ticks - offset) * sampling / drift_speed
 
 def get_x(df, event, plane):
@@ -92,7 +91,7 @@ def nearest_wire(point_ub, return_start=False, plane=None):
     if u_botm_crossing < WIRE.z_min:
         # calculate where u crosses the side
         u_side_crossing = get_side_corssing(point_ub, "u")[0]
-        ind0_closest_idx = np.searchsorted(u_side_wires, u_side_crossing)
+        ind0_closest_idx = len(u_side_wires) - np.searchsorted(u_side_wires, u_side_crossing)
         ind0_closest_start = [u_side_wires[ind0_closest_idx], WIRE.z_min]
 
     if v_botm_crossing < WIRE.z_max:
