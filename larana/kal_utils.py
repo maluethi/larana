@@ -85,22 +85,23 @@ def nearest_wire(point_ub, return_start=False, plane=None):
 
     if u_botm_crossing > WIRE.z_min:
         # just search for the wire closest to u along the z axis
-        ind0_closest_idx = np.searchsorted(u_btom_wires, u_botm_crossing)
+        ind0_closest_idx = np.argmin(np.abs(u_btom_wires - u_botm_crossing))
         ind0_closest_start = [WIRE.y_min, u_btom_wires[ind0_closest_idx]]
         ind0_closest_idx += len(u_side_wires)
     if u_botm_crossing < WIRE.z_min:
         # calculate where u crosses the side
         u_side_crossing = get_side_corssing(point_ub, "u")[0]
-        ind0_closest_idx = len(u_side_wires) - np.searchsorted(u_side_wires, u_side_crossing)
+        ind0_closest_idx = np.argmin(np.abs(u_side_wires - u_side_crossing))
         ind0_closest_start = [u_side_wires[ind0_closest_idx], WIRE.z_min]
+        ind0_closest_idx = len(u_side_wires) - ind0_closest_idx
 
     if v_botm_crossing < WIRE.z_max:
         # just search for the wire closest to u along the z axis
-        ind1_closest_idx = np.searchsorted(v_botm_wires, v_botm_crossing)
+        ind1_closest_idx = np.argmin(np.abs(v_botm_wires - v_botm_crossing))
         ind1_closest_start = [WIRE.y_min, v_botm_wires[ind1_closest_idx]]
     if v_botm_crossing > WIRE.z_max:
         v_side_crossing = get_side_corssing(point_ub, "v")[0]
-        ind1_closest_idx = np.searchsorted(v_side_wires, v_side_crossing)
+        ind1_closest_idx = np.argmin(np.abs(v_side_wires - v_side_crossing))
         ind1_closest_start = [v_side_wires[ind1_closest_idx], WIRE.z_max]
         ind1_closest_idx += len(v_botm_wires)
 
