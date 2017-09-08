@@ -57,7 +57,7 @@ class Laser:
     _polar_apparent_ticks = 10402809
     _polar_apparent = _polar_tick_length * _polar_apparent_ticks / _polar_linear2deg
 
-    LASER_DIR = {1: 1,
+    LASER_DIR = {1: tup(1, 1),
                  2: tup(1, 1)}
 
     LASER_DEG_OFFSETS = {1: tup(0, 0),  # polar, azimuth
@@ -65,6 +65,7 @@ class Laser:
 
     def __init__(self, laser_id):
         self.laser_id = laser_id
+        self.pos = LASER_POS[laser_id]
 
         self.laser_deg_offset = self.LASER_DEG_OFFSETS[laser_id]
         self.laser_dir = self.LASER_DIR[laser_id]
