@@ -242,7 +242,7 @@ def find_tree(tree_to_look_for, filename):
     return track_tree
 
 
-def get_branches(filename, treename, vectors=None):
+def get_branches(filename: object, treename: object, vectors: object = None) -> object:
     """ function that returns the appropriate branch string in a branch for the specified vectors of the branch  """
     if vectors is None:
         return rn.list_branches(filename, treename=treename)
@@ -277,13 +277,14 @@ def read_data(filename):
 
 
 def disassemble_track(track):
+    event_id = track[0]
     track = np.rec.array([track[1], track[2], track[3]],
                          dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
-    event_id = track[0]
     return track, event_id
 
 
 def disassemble_laser(laser):
+    event = laser[0]
     laser_entry = np.rec.array([laser[1], laser[2], laser[3]],
                                dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
     laser_exit = np.rec.array([laser[4], laser[5], laser[6]],
@@ -295,7 +296,7 @@ def disassemble_laser(laser):
     laser_pos = np.rec.array([laser[10], laser[11], laser[12]],
                              dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
 
-    return laser_entry, laser_exit, laser_dir, laser_pos
+    return laser_entry, laser_exit, laser_dir, laser_pos, event
 
 
 def write_to_root(tracks, laser):
