@@ -98,6 +98,20 @@ def assemble_lines(laser_data):
 
     return [zx_laser_lines, zy_laser_lines, xy_laser_lines]
 
+def assemble_line(laser_entry, laser_exit):
+
+    laser_entry = laser_entry.tolist()
+    laser_exit = laser_exit.tolist()
+
+    laser_df = [0,
+                  laser_entry[0],
+                  laser_entry[1],
+                  laser_entry[2],
+                  laser_exit[0],
+                  laser_exit[1],
+                  laser_exit[2]]
+    return assemble_lines([laser_df])
+
 
 def make_figure(tpc_limits=True, tpc_box=False, link_axes=True):
     fig = plt.figure(figsize=(8, 5.), dpi=160)
