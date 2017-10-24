@@ -90,12 +90,3 @@ class Track():
     @property
     def z(self):
         return self.track.z
-
-
-class Truth():
-    pass
-
-
-class Index:
-    def __init__(self, data):
-        self.data
