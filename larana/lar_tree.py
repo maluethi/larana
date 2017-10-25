@@ -8,9 +8,9 @@ class LarData:
     def __init__(self, filename):
         self.filename = filename
 
-        self.laser = []
-        self.tracks = []
-        self.truth = []
+        self._laser = []
+        self._tracks = []
+        self._truth = []
 
         self.read_laser()
         self.read_tracks()
@@ -19,7 +19,7 @@ class LarData:
     def read_laser(self):
         laser_raw = self.read_trees("Laser", leafs=['dir', 'pos'])
         for lasr in laser_raw:
-            self.laser.append(Laser(lasr))
+            self._laser.append(Laser(lasr))
 
     def read_tracks(self, source="data"):
         if source == "data":
@@ -36,9 +36,9 @@ class LarData:
 
         for track in track_raw:
             if source is 'data':
-                self.tracks.append(Track(track))
+                self._tracks.append(Track(track))
             elif source is 'sim':
-                self.truth.append(Track(track))
+                self._truth.append(Track(track))
 
     def read_trees(self, treename, leafs=None):
         tree = find_tree(treename, self.filename)
@@ -55,14 +55,14 @@ class LarData:
         return data
 
     def laser(self, event):
-        return self.laser[event]
+        return self._laser[event]
 
     def track(self, event):
-        track_in_event = [track for track in self.tracks if track.id == event]
+        track_in_event = [track for track in self._tracks if track.id == event]
         return track_in_event
 
     def at(self, event):
-        return self.laser(event), self.track(event)
+        return self._laser(event), self.track(event)
 
 
 class Laser():
