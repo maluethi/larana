@@ -50,18 +50,22 @@ class Laser:
     # for now (LCS2):
     _z_observed = 171.5 # TODO: Make this more accurate and get error
     _y_observed = 6.1   # TODO: Make this more accurate and get error
-    _azimu_apparent_angle = 155.46600348
-    _azimu_true_ange = np.rad2deg(np.tan(LASER_POS[2][0] / (LASER_POS[2][2] - _z_observed)))
+    _lcs2_azimu_apparent_angle = 155.46600348
+    _lcs2_azimu_true_ange = np.rad2deg(np.tan(LASER_POS[2][0] / (LASER_POS[2][2] - _z_observed)))
 
-    _polar_true_angle = 90.0 - np.rad2deg(np.tan(_y_observed / (LASER_POS[2][2] - _z_observed)))
-    _polar_apparent_ticks = 10402809
-    _polar_apparent = _polar_tick_length * _polar_apparent_ticks / _polar_linear2deg
+    _lcs2_polar_true_angle = 90.0 - np.rad2deg(np.tan(_y_observed / (LASER_POS[2][2] - _z_observed)))
+    _lcs2_polar_apparent_ticks = 10402809
+    _lcs2_polar_apparent = _polar_tick_length * _lcs2_polar_apparent_ticks / _polar_linear2deg
+
+    _lcs1_azimu_true_angle = 0.
+    _lcs2_polar_calib = 0.
 
     LASER_DIR = {1: tup(1, 1),
                  2: tup(1, 1)}
 
-    LASER_DEG_OFFSETS = {1: tup(0, 0),  # polar, azimuth
-                         2: tup((_polar_apparent - _polar_true_angle), (_azimu_apparent_angle + _azimu_true_ange))}
+    LASER_DEG_OFFSETS = {1: tup(_lcs2_polar_calib, _lcs1_azimu_true_angle),  # polar, azimuth
+                         2: tup((_lcs2_polar_apparent - _lcs2_polar_true_angle),
+                                (_lcs2_azimu_apparent_angle + _lcs2_azimu_true_ange))}
 
     def __init__(self, laser_id):
         self.laser_id = laser_id
