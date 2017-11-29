@@ -211,6 +211,17 @@ def calc_distance(point1, point2):
     return np.sqrt(np.power(np.abs(point1[0] - point2[0]), 2) + np.power(np.abs(point1[1] - point2[1]), 2))
 
 
+def close_to_side(track, region_z, laser_id):
+    if laser_id == 1:
+        min_z = np.min(track.z)
+        if np.abs(TPC.z_min - min_z) < region_z:
+            return True
+    elif laser_id == 2:
+        max_z = np.max(track.z)
+        if np.abs(TPC.z_max - max_z) < region_z:
+            return True
+    return False
+
 def endpoint_inside(laser_track):
     x, y, z = laser_track
 
