@@ -78,4 +78,13 @@ class TestRing:
         assert_almost_equal(tang[0], 0.)
         assert_almost_equal(np.rad2deg(tang[1]), 90.)
 
+class TestLine:
+    def test_line(self):
+        pt = gm.Point(0,0)
+        m = 45 #deg
+
+        line = gm.Line(pt, m)
+        y = line.at(1)
+        assert_almost_equal(y, 1.0)
+
 

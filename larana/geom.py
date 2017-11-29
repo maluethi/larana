@@ -140,6 +140,14 @@ class Point():
         else:
             raise ValueError('not point')
 
+    def __str__(self):
+        return "x: {}, y: {}".format(self.x, self.y)
+
+    def dxdy(self, other):
+        dx = self.x - other.x
+        dy = self.y - other.y
+        return [dx, dy]
+
     def dist(self, other):
         dx = np.abs(self.x - other.x)
         dy = np.abs(self.y - other.y)
@@ -147,8 +155,7 @@ class Point():
         return d
 
     def angle(self, other):
-        dx = np.abs(self.x - other.x)
-        dy = np.abs(self.y - other.y)
+        dx, dy = self.dxdy(other)
         a = np.arctan(dy/dx)
         return a
 
@@ -163,3 +170,12 @@ class Ring():
         tangent_angle = np.arcsin(self.radius/d)
 
         return [ang - tangent_angle, ang + tangent_angle]
+
+class Line:
+    def __init__(self, pt, m):
+        self.point = pt
+        self.slope = np.deg2rad(m)
+
+    def at(self, x):
+        y = np.tan(self.slope)*(x - self.point.x) + self.point.y
+        return y
