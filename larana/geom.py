@@ -118,3 +118,48 @@ class Laser:
 
     def power2steps(self):
         pass
+
+
+def angle(pt1, pt2):
+    return pt1.angle(pt2)
+
+
+def dist(pt1, pt2):
+    return pt1.dist(pt2)
+
+
+class Point():
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+    def __add__(self, other):
+        if isinstance(other, Point):
+            self.x += other.x
+            self.y += other.y
+        else:
+            raise ValueError('not point')
+
+    def dist(self, other):
+        dx = np.abs(self.x - other.x)
+        dy = np.abs(self.y - other.y)
+        d = np.sqrt(np.power(dx,2) + np.power(dy,2))
+        return d
+
+    def angle(self, other):
+        dx = np.abs(self.x - other.x)
+        dy = np.abs(self.y - other.y)
+        a = np.arctan(dy/dx)
+        return a
+
+class Ring():
+    def __init__(self, center, radius):
+        self.center = center
+        self.radius = radius
+
+    def tangent(self, point):
+        d = dist(self.center, point)
+        ang = angle(self.center, point)
+        tangent_angle = np.arcsin(self.radius/d)
+
+        return [ang - tangent_angle, ang + tangent_angle]

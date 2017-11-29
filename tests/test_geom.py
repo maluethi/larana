@@ -1,6 +1,7 @@
 import larana.geom as gm
 from numpy.testing import assert_array_almost_equal, assert_almost_equal
 from larana.lar_utils import TPC
+import numpy as np
 
 class TestIntersection(object):
     def test_simple(self):
@@ -42,3 +43,39 @@ class TestLaser:
         # other point
         raw = la.polar_laser2raw(0)
         assert_almost_equal(raw, 296.921182, decimal=3)
+
+class TestPoint:
+    def test_point_distance(self):
+        pt1 = gm.Point(1,1)
+        pt2 = gm.Point(1,1)
+
+        d = pt1.dist(pt2)
+        assert_almost_equal(d, 0.)
+
+        pt2 = gm.Point(2, 2)
+        d = pt1.dist(pt2)
+        assert_almost_equal(d, np.sqrt(2))
+
+        d = pt2.dist(pt1)
+        assert_almost_equal(d, np.sqrt(2))
+
+    def test_point_angle(self):
+        pt1 = gm.Point(1, 1)
+        pt2 = gm.Point(2, 2)
+
+        a = pt1.angle(pt2)
+        assert_almost_equal(np.rad2deg(a), 45.)
+
+class TestRing:
+    def test_tangent(self):
+        center = gm.Point(1,1)
+        circ = gm.Ring(center, 1)
+
+        pt = gm.Point(0,0)
+
+        tang = circ.tangent(pt)
+
+        assert_almost_equal(tang[0], 0.)
+        assert_almost_equal(np.rad2deg(tang[1]), 90.)
+
+
