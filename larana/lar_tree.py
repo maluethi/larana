@@ -17,10 +17,13 @@ class LarData:
         self.read_tracks(source='sim')
 
     def read_laser(self):
-        laser_raw = self.read_trees("Laser", leafs=['dir', 'pos'])
-        for lasr in laser_raw:
-            self._laser.append(Laser(lasr))
-
+        try:
+            laser_raw = self.read_trees("Laser", leafs=['dir', 'pos'])
+            for lasr in laser_raw:
+                self._laser.append(Laser(lasr))
+        except EOFError as e:
+            print(e)
+            
     def read_tracks(self, source="data"):
         if source == "data":
             tree = "Tracks"
@@ -30,7 +33,7 @@ class LarData:
             raise ValueError("unknown source: {}".format(source))
         try:
             track_raw = self.read_trees(tree)
-        except ValueError as e:
+        except EOFError as e:
             print(e)
             return
 
@@ -55,29 +58,52 @@ class LarData:
         return data
 
     def laser(self, event):
-        return self._laser[event]
-
+        try:
+            return self._laser[event]
+        except IndexError:
+            return []
+        
     def track(self, event):
-        track_in_event = [track for track in self._tracks if track.id == event]
+        try:
+            track_in_event = [track for track in self._tracks if track.id == event]
+        except IndexError:
+            track_in_event = []
         return track_in_event
+    
+    def mctrack(self, event):
+        try:
+            mctrack_in_event = [track for track in self._truth if track.id == event]
+        except IndexError:
+            mctrack_in_event = []
+        return mctrack_in_event
+    
+    def __getitem__(self, item):
+        laser = self.laser(item)
+        track = self.track(item)
+        mctrack = self.mctrack(item)
 
-    def at(self, event):
-        return self._laser(event), self.track(event)
+        for tr in [laser, track, mctrack]:
+            if tr is None:
+                tr = []
+        return laser, track, mctrack
 
 
 class Laser():
     def __init__(self, raw_laser):
         las = disassemble_laser(raw_laser)
         self.id = las[4]
-        self.entry = las[0]
-        self.exit = las[1]
-        self.dir = las[2]
-        self.pos = las[3]
+        self.entry = las[0].tolist()
+        self.exit = las[1].tolist()
+        self.dir = las[2].tolist()
+        self.pos = las[3].tolist()
 
 
 class Track():
     def __init__(self, raw_track):
         self.track, self.id = disassemble_track(raw_track)
+
+    def __le__(self, other):
+        return len(self.track.x)
 
     @property
     def x(self):
