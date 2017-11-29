@@ -31,12 +31,14 @@ def load_tracks(file):
 def plot_track(x, y, z, axes, **kwargs):
     ax_zx, ax_zy, ax_xy = axes
 
-    ax_zx.scatter(z, x, **kwargs)
-    ax_zy.scatter(z, y, **kwargs)
-    ax_xy.scatter(x, y, **kwargs)
+    zx_sc = ax_zx.plot(z, x, **kwargs)
+    zy_sc = ax_zy.plot(z, y, **kwargs)
+    xy_sc = ax_xy.plot(x, y, **kwargs)
+
+    return [zx_sc, zy_sc, xy_sc]
 
 
-def plot_edges(axes, start, end, kwargs=None):
+def plot_edges(axes, start, end, **kwargs):
     if kwargs is None:
         axes[0].plot([start[2], end[2]], [start[0], end[0]], '-*')
         axes[1].plot([start[2], end[2]], [start[1], end[1]], '-*')
