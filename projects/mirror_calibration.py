@@ -74,6 +74,7 @@ def plot_tangents(ax, angles, laser_pos):
     line_collection = LineCollection(lines)
     ax.add_collection(line_collection)
 
+
 def get_edges(bins, entries, threshold, width_bin=10.):
     over = False
     edges = []
@@ -90,6 +91,7 @@ def get_edges(bins, entries, threshold, width_bin=10.):
 
     widths = [edge[1] - edge[0] for edge in edges]
     return edges, widths
+
 
 def iterate(laser_pos, edgs=None, wid=None, plotting=False):
     laser_pos = Point(laser_pos[0], laser_pos[1])
@@ -110,7 +112,7 @@ def iterate(laser_pos, edgs=None, wid=None, plotting=False):
         print("res", res_wid, res_edg)
         res += w*(res_wid + res_edg)
 
-    # plotting
+    # TODO: Factor this out in a function
     if plotting:
         fig2, ax2 = plt.subplots()
 
@@ -145,10 +147,10 @@ edges, widths = get_edges(bins, entries, 3.)
 
 laser_pos = [-36, -0.5]
 iter = partial(iterate, edgs=edges, wid=widths)
-res = minimize(iter, laser_pos, bounds=[(-50, -1), [-2, 2]],method='nelder-mead', options={'xtol': 1e-8, 'disp': True})
+res = minimize(iter, laser_pos, bounds=[(-50, -1), [-2, 2]],
+               method='nelder-mead',
+               options={'xtol': 1e-8, 'disp': True})
 print(res)
-
-
 
 
 fig2, ax2 = plt.subplots()
