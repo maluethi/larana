@@ -71,6 +71,23 @@ def plot_tangents(ax, angles, laser_pos):
     line_collection = LineCollection(lines)
     ax.add_collection(line_collection)
 
+def get_edges(bins, entries, threshold, width_bin=10.):
+    over = False
+    edges = []
+    for idx in range(1, len(entries)):
+        if entries[idx] > threshold and not over:
+            start = bins[idx]
+            start_idx = idx
+            over = True
+        elif entries[idx] < threshold and over:
+            end = bins[idx]
+            if idx - start_idx > width_bin:
+                edges.append([start, end])
+            over = False
+
+    widths = [edge[1] - edge[0] for edge in edges]
+    return edges, widths
+
 
 gen_histo = False
 hist_file = "./out/histo_calib/histo_1000.npy"
@@ -80,6 +97,9 @@ if gen_histo:
     np.save(hist_file, [bins, entries])
 else:
     bins, entries = np.load(hist_file)
+
+edges, widths = get_edges(bins, entries, 5.)
+
 
 laser_pos = Point(-36, 1.6)
 ring_radius = 1.25
@@ -105,6 +125,10 @@ plt.xlim([-50,50])
 
 plt.plot(bins[:-1], entries)
 
+
+for lin in edges:
+    plt.axvline(x=lin[0], color='red', alpha=0.3)
+    plt.axvline(x=lin[1], color='red', alpha=0.3)
 plt.show()
 
 
