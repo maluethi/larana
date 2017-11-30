@@ -24,10 +24,11 @@ def calc_widths(filename):
         # loop over all tracks in this event
         for track in tracks[track_list]:
             track_points, evt = disassemble_track(track)
-            if close_to_side(track_points, 5., 2):
+            if close_to_side(track_points, 10., 2):
                 azimu.append(np.rad2deg(np.arctan(dir.x / dir.z)))
 
-    plt.hist(azimu, 250)
+    entries, bins,  = np.histogram(azimu, 1000)
+    return bins, entries
 
 def tangent_angles(laser_pos, rings):
     angles = [np.rad2deg(ring.tangent(laser_pos))for ring in rings]
@@ -71,9 +72,18 @@ def plot_tangents(ax, angles, laser_pos):
     ax.add_collection(line_collection)
 
 
-laser_pos = Point(-10, 0)
-ring_radius = 1
-rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-21, 22, 3)]
+gen_histo = False
+hist_file = "./out/histo_calib/histo_1000.npy"
+if gen_histo:
+    filename = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
+    bins, entries = calc_widths(filename)
+    np.save(hist_file, [bins, entries])
+else:
+    bins, entries = np.load(hist_file)
+
+laser_pos = Point(-36, 1.6)
+ring_radius = 1.25
+rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-28, 29, 4)]
 
 angles = tangent_angles(laser_pos, rings)
 op_angles, opening = opening_angle(angles)
@@ -89,12 +99,12 @@ fig2, ax2 = plt.subplots()
 for angle, op in zip(op_angles, opening):
     print(angle[0], op)
 
-    rect = Rectangle([angle[0], 0], op, 5.0)
+    rect = Rectangle([angle[0], 0], op, 5.0, fill='red', alpha=0.5)
     ax2.add_patch(rect)
 plt.xlim([-50,50])
 
-filename = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
-calc_widths(filename)
+plt.plot(bins[:-1], entries)
+
 plt.show()
 
 
