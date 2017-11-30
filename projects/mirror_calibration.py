@@ -7,7 +7,10 @@ from matplotlib.patches import Circle, Rectangle
 import matplotlib.pyplot as plt
 import numpy as np
 
-def calc_widths(filename):
+from scipy.optimize import minimize
+from functools import partial
+
+def calc_widths(filename, n_bins=1000):
     tracks = read_tracks(filename)
     lasers = read_laser(filename)
 
@@ -27,7 +30,7 @@ def calc_widths(filename):
             if close_to_side(track_points, 10., 2):
                 azimu.append(np.rad2deg(np.arctan(dir.x / dir.z)))
 
-    entries, bins,  = np.histogram(azimu, 1000)
+    entries, bins,  = np.histogram(azimu, n_bins)
     return bins, entries
 
 def tangent_angles(laser_pos, rings):
@@ -88,25 +91,90 @@ def get_edges(bins, entries, threshold, width_bin=10.):
     widths = [edge[1] - edge[0] for edge in edges]
     return edges, widths
 
+def iterate(laser_pos, edgs=None, wid=None, plotting=False):
+    laser_pos = Point(laser_pos[0], laser_pos[1])
+    ring_radius = 1.25
+    rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-18, 6, 4)]
+
+    angles = tangent_angles(laser_pos, rings)
+    op_angles, opening = opening_angle(angles)
+
+    res = 0
+    weights = [0.2, 0.2, 1., 1, 1.5]
+    for width, op, edg, op_ang, w in zip(wid, opening, edgs, op_angles, weights):
+        res_wid = np.abs(edg[1] - op_ang[1])
+        res_edg = np.abs(edg[0] - op_ang[0])
+
+        print("edg:", edg[0],op_ang[0])
+
+        print("res", res_wid, res_edg)
+        res += w*(res_wid + res_edg)
+
+    # plotting
+    if plotting:
+        fig2, ax2 = plt.subplots()
+
+        for angle, op in zip(op_angles, opening):
+            rect = Rectangle([angle[0], 0], op, 5.0, fill='red', alpha=0.5)
+            ax2.add_patch(rect)
+        plt.xlim([-45, 5])
+
+        plt.plot(bins[:-1], entries)
+
+        for edg, op_ang in zip(edgs, op_angles):
+            plt.axvline(x=edg[0], color='red', alpha=0.3)
+            plt.axvline(x=edg[1], color='red', alpha=0.3)
+            plt.axvline(x=op_ang[0], color='green', alpha=0.3)
+            plt.axvline(x=op_ang[1], color='green', alpha=0.3)
+        plt.show()
+    print("-------------",res,"------------")
+    print(laser_pos)
+    return res
 
 gen_histo = False
-hist_file = "./out/histo_calib/histo_1000.npy"
+n_bins = 1000
+hist_file = "./out/histo_calib/histo_{}.npy".format(n_bins)
 if gen_histo:
-    filename = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
-    bins, entries = calc_widths(filename)
+    track_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
+    bins, entries = calc_widths(track_file, n_bins)
     np.save(hist_file, [bins, entries])
 else:
     bins, entries = np.load(hist_file)
 
-edges, widths = get_edges(bins, entries, 5.)
+edges, widths = get_edges(bins, entries, 3.)
+
+laser_pos = [-36, -0.5]
+iter = partial(iterate, edgs=edges, wid=widths)
+res = minimize(iter, laser_pos, bounds=[(-50, -1), [-2, 2]],method='nelder-mead', options={'xtol': 1e-8, 'disp': True})
+print(res)
 
 
-laser_pos = Point(-36, 1.6)
+
+
+fig2, ax2 = plt.subplots()
+
+laser_pos = Point(res.x[0], res.x[1])
 ring_radius = 1.25
-rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-28, 29, 4)]
+rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-18, 6, 4)]
 
 angles = tangent_angles(laser_pos, rings)
 op_angles, opening = opening_angle(angles)
+
+
+for angle, op in zip(op_angles, opening):
+    rect = Rectangle([angle[0], 0], op, 15.0, fill='red', alpha=0.5)
+    ax2.add_patch(rect)
+plt.xlim([-30, 5])
+plt.ylim([0,20])
+
+plt.plot(bins[:-1], entries)
+
+for lin, op_ang in zip(edges, op_angles):
+    plt.axvline(x=lin[0], color='red', alpha=0.3)
+    plt.axvline(x=lin[1], color='red', alpha=0.3)
+    plt.axvline(x=op_ang[0], color='green', alpha=0.3)
+    plt.axvline(x=op_ang[1], color='green', alpha=0.3)
+plt.show()
 
 fig1, ax = plt.subplots()
 plot_rings(ax, rings)
@@ -114,23 +182,4 @@ plot_tangents(ax, op_angles, laser_pos)
 ax.plot(laser_pos.x, laser_pos.y, "x")
 ax.set_aspect(1)
 plt.show()
-
-fig2, ax2 = plt.subplots()
-for angle, op in zip(op_angles, opening):
-    print(angle[0], op)
-
-    rect = Rectangle([angle[0], 0], op, 5.0, fill='red', alpha=0.5)
-    ax2.add_patch(rect)
-plt.xlim([-50,50])
-
-plt.plot(bins[:-1], entries)
-
-
-for lin in edges:
-    plt.axvline(x=lin[0], color='red', alpha=0.3)
-    plt.axvline(x=lin[1], color='red', alpha=0.3)
-plt.show()
-
-
-
 
