@@ -33,6 +33,7 @@ def calc_widths(filename, n_bins=1000):
     entries, bins,  = np.histogram(azimu, n_bins)
     return bins, entries
 
+
 def tangent_angles(laser_pos, rings):
     angles = [np.rad2deg(ring.tangent(laser_pos))for ring in rings]
     return angles
@@ -93,45 +94,40 @@ def get_edges(bins, entries, threshold, width_bin=10.):
     return edges, widths
 
 
-def iterate(laser_pos, edgs=None, wid=None, plotting=False):
-    laser_pos = Point(laser_pos[0], laser_pos[1])
-    ring_radius = 1.25
-    rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-18, 6, 4)]
+def plot_estimate(ax, opening_angle, opening):
 
-    angles = tangent_angles(laser_pos, rings)
-    op_angles, opening = opening_angle(angles)
+    for angle, op in zip(opening_angle, opening):
+        rect = Rectangle([angle[0], 0], op, 5.0, fill='red', alpha=0.5)
+        ax.add_patch(rect)
+    ax.set_xlim([-45, 5])
 
-    res = 0
-    weights = [0.2, 0.2, 1., 1, 1.5]
-    for width, op, edg, op_ang, w in zip(wid, opening, edgs, op_angles, weights):
-        res_wid = np.abs(edg[1] - op_ang[1])
-        res_edg = np.abs(edg[0] - op_ang[0])
 
-        print("edg:", edg[0],op_ang[0])
+def plot_edges(ax, edges, color='green'):
 
-        print("res", res_wid, res_edg)
-        res += w*(res_wid + res_edg)
+    for edg in edges:
+        ax.axvline(x=edg[0], color=color, alpha=0.3)
+        ax.axvline(x=edg[1], color=color, alpha=0.3)
 
-    # TODO: Factor this out in a function
+
+def iterate(laser_pos, rings=None, edgs=None, wid=None, weights=[0.2, 0.2, 1., 1, 1], plotting=True):
+    laser = Point(laser_pos[0], laser_pos[1])
+
+    ang = tangent_angles(laser, rings)
+    op_starts, op_widths = opening_angle(ang)
+
+    residual = 0
+    for width, op_width, edg, op_start, w in zip(wid, op_widths, edgs, op_starts, weights):
+        res_wid = np.abs(edg[1] - op_start[1])
+        res_edg = np.abs(edg[0] - op_start[0])
+        residual += w*(res_wid + res_edg)
+
     if plotting:
-        fig2, ax2 = plt.subplots()
-
-        for angle, op in zip(op_angles, opening):
-            rect = Rectangle([angle[0], 0], op, 5.0, fill='red', alpha=0.5)
-            ax2.add_patch(rect)
-        plt.xlim([-45, 5])
-
-        plt.plot(bins[:-1], entries)
-
-        for edg, op_ang in zip(edgs, op_angles):
-            plt.axvline(x=edg[0], color='red', alpha=0.3)
-            plt.axvline(x=edg[1], color='red', alpha=0.3)
-            plt.axvline(x=op_ang[0], color='green', alpha=0.3)
-            plt.axvline(x=op_ang[1], color='green', alpha=0.3)
+        fig, ax = plt.subplots()
+        plot_estimate(ax, op_starts, op_widths)
+        plot_edges(ax, edgs)
         plt.show()
-    print("-------------",res,"------------")
-    print(laser_pos)
-    return res
+
+    return residual
 
 gen_histo = False
 n_bins = 1000
@@ -143,11 +139,14 @@ if gen_histo:
 else:
     bins, entries = np.load(hist_file)
 
-edges, widths = get_edges(bins, entries, 3.)
+edges, widths = get_edges(bins, entries, 5.)
+
+ring_radius = 1.25
+rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-18, 6, 4)]
 
 laser_pos = [-36, -0.5]
-iter = partial(iterate, edgs=edges, wid=widths)
-res = minimize(iter, laser_pos, bounds=[(-50, -1), [-2, 2]],
+iter = partial(iterate, edgs=edges, wid=widths, rings=rings)
+res = minimize(iter, laser_pos, bounds=[(-1000, -1), [-20, 20]],
                method='nelder-mead',
                options={'xtol': 1e-8, 'disp': True})
 print(res)
@@ -156,8 +155,7 @@ print(res)
 fig2, ax2 = plt.subplots()
 
 laser_pos = Point(res.x[0], res.x[1])
-ring_radius = 1.25
-rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-18, 6, 4)]
+
 
 angles = tangent_angles(laser_pos, rings)
 op_angles, opening = opening_angle(angles)
