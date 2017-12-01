@@ -10,6 +10,7 @@ import numpy as np
 from scipy.optimize import minimize
 from functools import partial
 
+
 def calc_widths(filename, n_bins=1000):
     tracks = read_tracks(filename)
     lasers = read_laser(filename)
@@ -39,10 +40,6 @@ def tangent_angles(laser_pos, rings):
     return angles
 
 
-def viewable_angles(angles):
-    pass
-
-
 def opening_angle(angles):
     opening_angles = []
     opening = []
@@ -51,7 +48,6 @@ def opening_angle(angles):
         if delta > 0.:
             opening_angles.append([angles[idx-1][1], angles[idx][0]])
             opening.append(delta)
-
 
     return opening_angles, opening
 
@@ -76,9 +72,11 @@ def plot_tangents(ax, angles, laser_pos):
     ax.add_collection(line_collection)
 
 
-def get_edges(bins, entries, threshold, width_bin=10.):
+def get_edges(bins, entries, threshold, width_bin=10):
     over = False
     edges = []
+    start_idx = 0
+    start = None
     for idx in range(1, len(entries)):
         if entries[idx] > threshold and not over:
             start = bins[idx]
@@ -86,7 +84,7 @@ def get_edges(bins, entries, threshold, width_bin=10.):
             over = True
         elif entries[idx] < threshold and over:
             end = bins[idx]
-            if idx - start_idx > width_bin:
+            if (idx - start_idx) > width_bin:
                 edges.append([start, end])
             over = False
 
@@ -109,7 +107,9 @@ def plot_edges(ax, edges, color='green'):
         ax.axvline(x=edg[1], color=color, alpha=0.3)
 
 
-def iterate(laser_pos, rings=None, edgs=None, wid=None, weights=[0.2, 0.2, 1., 1, 1], plotting=True):
+def calc_overlap(laser_pos, rings=None, edgs=None, wid=None, weights=[0.2, 0.2, 1., 1, 1], plotting=False):
+    """ This is the heart of the script. Here we calculate how much the viewable angles from the supplied
+     laser and ring position and the supplied measured angles overlap. """
     laser = Point(laser_pos[0], laser_pos[1])
 
     ang = tangent_angles(laser, rings)
@@ -129,33 +129,40 @@ def iterate(laser_pos, rings=None, edgs=None, wid=None, weights=[0.2, 0.2, 1., 1
 
     return residual
 
+
+# Loading the histogram from file, or calculate a new one.
+# It takes quite a while, therefore we store them for later use.
 gen_histo = False
+track_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
 n_bins = 1000
+
 hist_file = "./out/histo_calib/histo_{}.npy".format(n_bins)
 if gen_histo:
-    track_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
     bins, entries = calc_widths(track_file, n_bins)
     np.save(hist_file, [bins, entries])
 else:
     bins, entries = np.load(hist_file)
 
-edges, widths = get_edges(bins, entries, 5.)
+# detect the edges based on threshold
+threshold = 5.
+edges, widths = get_edges(bins, entries, threshold)
 
+# generate the ring positions
 ring_radius = 1.25
 rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-18, 6, 4)]
 
-laser_pos = [-36, -0.5]
-iter = partial(iterate, edgs=edges, wid=widths, rings=rings)
-res = minimize(iter, laser_pos, bounds=[(-1000, -1), [-20, 20]],
+# find the best position for the laser
+laser_pos0 = [-36, -0.5]
+iter = partial(calc_overlap, edgs=edges, wid=widths, rings=rings)
+res = minimize(iter, laser_pos0, bounds=[(-1000, -1), [-20, 20]],
                method='nelder-mead',
                options={'xtol': 1e-8, 'disp': True})
 print(res)
 
 
+# Plotting the result
 fig2, ax2 = plt.subplots()
-
 laser_pos = Point(res.x[0], res.x[1])
-
 
 angles = tangent_angles(laser_pos, rings)
 op_angles, opening = opening_angle(angles)
@@ -166,6 +173,8 @@ for angle, op in zip(op_angles, opening):
     ax2.add_patch(rect)
 plt.xlim([-30, 5])
 plt.ylim([0,20])
+plt.xlabel("azimuthal angle [deg]")
+plt.ylabel("N")
 
 plt.plot(bins[:-1], entries)
 
@@ -181,5 +190,9 @@ plot_rings(ax, rings)
 plot_tangents(ax, op_angles, laser_pos)
 ax.plot(laser_pos.x, laser_pos.y, "x")
 ax.set_aspect(1)
+
+plt.xlabel("z [cm]")
+plt.ylabel("y [cm]")
+
 plt.show()
 
