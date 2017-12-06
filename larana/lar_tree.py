@@ -36,6 +36,9 @@ class LarData:
         except EOFError as e:
             print(e)
             return
+        except ValueError as e:
+            print(e)
+            return
 
         for track in track_raw:
             if source is 'data':
