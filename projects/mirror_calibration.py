@@ -1,4 +1,4 @@
-from larana.lar_utils import read_tracks, read_laser, disassemble_laser, disassemble_track, close_to_side
+from larana.lar_utils import read_tracks, read_laser, disassemble_laser, disassemble_track, close_to_side, find_unique_polar_idx
 from larana.geom import TPC, Point, Ring, Line
 
 from matplotlib.collections import PatchCollection, LineCollection
@@ -18,18 +18,29 @@ def calc_widths(filename, n_bins=1000):
     # generate event id lists, since there are more tracks than events
     track_event_id = np.array([track[0] for track in tracks])
 
-    azimu = []
+    pol_incs = find_unique_polar_idx(lasers)
+
 
     # loop over all tracks in the file
-    for laser in lasers:
-        _, _, dir, _, evt = disassemble_laser(laser)
-        track_list = np.where(track_event_id == evt)
+    pol = []
+    for pol_idx in pol_incs:
+        azimu = []
+        for laser in lasers[pol_idx]:
+            _, _, dir, _, evt = disassemble_laser(laser)
+            track_list = np.where(track_event_id == evt)
+            print(evt)
+            # loop over all tracks in this event
+            for track in tracks[track_list]:
+                track_points, evt = disassemble_track(track)
+                if close_to_side(track_points, 10., 2):
+                    azimu.append(np.rad2deg(np.arctan(dir.x / dir.z)))
+        pol.append(list(azimu))
+        print(azimu)
+        azimu.clear()
 
-        # loop over all tracks in this event
-        for track in tracks[track_list]:
-            track_points, evt = disassemble_track(track)
-            if close_to_side(track_points, 10., 2):
-                azimu.append(np.rad2deg(np.arctan(dir.x / dir.z)))
+    print("len:", pol[0])
+    plt.hist(pol, 250, range=[-30, 5], stacked=True)
+    plt.show()
 
     entries, bins,  = np.histogram(azimu, n_bins)
     return bins, entries
@@ -132,7 +143,7 @@ def calc_overlap(laser_pos, rings=None, edgs=None, wid=None, weights=[0.2, 0.2, 
 
 # Loading the histogram from file, or calculate a new one.
 # It takes quite a while, therefore we store them for later use.
-gen_histo = False
+gen_histo = True
 track_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
 n_bins = 1000
 
@@ -142,6 +153,9 @@ if gen_histo:
     np.save(hist_file, [bins, entries])
 else:
     bins, entries = np.load(hist_file)
+
+
+exit(0)
 
 # detect the edges based on threshold
 threshold = 5.
