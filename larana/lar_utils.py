@@ -7,6 +7,9 @@ from matplotlib import gridspec
 
 import ROOT
 
+import logging
+import time
+
 import types
 from collections import namedtuple
 
@@ -284,6 +287,9 @@ def read_tracks(filename, identifier='Tracks'):
     track_data = rn.root2array(filename, treename=find_tree(identifier, filename))
     return track_data
 
+def read_raw(filename, identifier='Raw'):
+    raw_data = rn.root2array(filename, treename=find_tree(identifier, filename))
+    return raw_data
 
 def read_data(filename):
     return read_tracks(filename), read_laser(filename)
@@ -402,3 +408,29 @@ def find_unique_polar_idx(laser_data, precision=0.01):
         horizontal_scans_slices.append(np.where((angles < polar + precision) & (angles > polar - precision)))
 
     return horizontal_scans_slices
+
+
+def setup_logging(run_number):
+    # set up logging to file - see previous section for more details
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s %(name)-4s %(levelname)-4s %(message)s',
+                        datefmt='%H:%M:%S',
+                        filename='./log/selecter-{}-{}.log'.format(run_number,
+                                                                   time.strftime("%Y-%m-%d-%H-%M", time.gmtime())),
+                        filemode='w')
+
+    # define a Handler which writes INFO messages or higher to the sys.stderr
+    console = logging.StreamHandler()
+    console.setLevel(logging.INFO)
+    # set a format which is simpler for console use
+    formatter = logging.Formatter('%(asctime)s %(name)-4s: %(levelname)-4s %(message)s',
+                                  datefmt='%H:%M:%S',)
+    # tell the handler to use this format
+    console.setFormatter(formatter)
+    # add the handler to the root logger
+    logging.getLogger('').addHandler(console)
+
+    # Now, we can log to the root logger, or any other logger. First the root...
+    logging.info('Logger started')
+
+    return logging
