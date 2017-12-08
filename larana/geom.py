@@ -119,6 +119,12 @@ class Laser:
     def power2steps(self):
         pass
 
+def distance(p1, p2):
+    p1 = np.array([item for item in p1])
+    p2 = np.array([item for item in p2])
+
+    dist = np.sqrt(np.sum(np.power(p2 - p1, 2)))
+    return dist
 
 def angle(pt1, pt2):
     return pt1.angle(pt2)

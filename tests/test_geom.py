@@ -21,6 +21,25 @@ class TestIntersection(object):
         assert_array_almost_equal(pt_entry, [120., 0., TPC.z_min])
         assert_array_almost_equal(pt_exit, [120, 0, TPC.z_max])
 
+    def test_dist(self):
+        a = [0,0,0]
+        b = [1,0,0]
+
+        d = gm.distance(a, b)
+        assert_almost_equal(d, 1.0)
+
+        a = [0,0,1]
+        b = [1,0,0]
+
+        d = gm.distance(a, b)
+        assert_almost_equal(d, np.sqrt(2.0))
+
+        a = [0,0,1]
+        b = np.array([1,0,0])
+
+        d = gm.distance(a, b)
+        assert_almost_equal(d, np.sqrt(2.0))
+
 class TestLaser:
     def test_azimu2raw(self):
         la = gm.Laser(laser_id=2)
