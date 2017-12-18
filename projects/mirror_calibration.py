@@ -107,7 +107,7 @@ def plot_edges(ax, edges, color='green'):
         ax.axvline(x=edg[1], color=color, alpha=0.3)
 
 
-def calc_overlap(laser_pos, rings=None, edgs=None, wid=None, weights=[0.2, 0.2, 1., 1, 1], plotting=False):
+def calc_overlap(laser_pos, rings=None, edgs=None, wid=None, weights=(.2, 0.2, 1., 1, 1), plotting=False):
     """ This is the heart of the script. Here we calculate how much the viewable angles from the supplied
      laser and ring position and the supplied measured angles overlap. """
     laser = Point(laser_pos[0], laser_pos[1])
@@ -132,8 +132,9 @@ def calc_overlap(laser_pos, rings=None, edgs=None, wid=None, weights=[0.2, 0.2, 
 
 # Loading the histogram from file, or calculate a new one.
 # It takes quite a while, therefore we store them for later use.
-gen_histo = False
+gen_histo = True
 track_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
+#track_file = "/home/data/uboone/laser/7252/tracks/Tracks-7252.root"
 n_bins = 1000
 
 hist_file = "./out/histo_calib/histo_{}.npy".format(n_bins)
@@ -148,16 +149,26 @@ threshold = 5.
 edges, widths = get_edges(bins, entries, threshold)
 
 # generate the ring positions
-ring_radius = 1.25
-rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-18, 6, 4)]
+ring_radius = 1.27
+center_to_center = 4
+rings = [Ring(Point(0, z), ring_radius) for z in np.arange(-18, 6, center_to_center)]
 
 # find the best position for the laser
-laser_pos0 = [-36, -0.5]
+laser_pos0 = [-32, -0.1]
 iter = partial(calc_overlap, edgs=edges, wid=widths, rings=rings)
 res = minimize(iter, laser_pos0, bounds=[(-1000, -1), [-20, 20]],
                method='nelder-mead',
                options={'xtol': 1e-8, 'disp': True})
 print(res)
+
+ring_26 = 26 * center_to_center
+Lx = ring_26 - res.x[1]
+Ly = res.x[0]
+
+print("------------------------------------")
+print(" Laser ring, between ring 26 and 27 ")
+print(" from counts in select tracks.      ")
+print(" Laser Position: x={}, z={} ".format(Lx, Ly))
 
 
 # Plotting the result
