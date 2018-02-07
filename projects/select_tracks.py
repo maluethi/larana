@@ -13,7 +13,7 @@ log.info("Well well")
 
 CUTS = {"entry_region": 5.,
         "slope": 0.4,  # difference from expected to measured slope that is acceptable
-        "Smoothness": [.15, .15, .15]}  # fraction that the track can be off from the expected slope in x,y,z
+        "smoothness": 1.}  # maximum stepsize in cm for a single step (acts on kinks)
 
 in_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
 #in_file = "/home/data/uboone/laser/sim/Tracks-lcs1-023_true.root"
@@ -66,14 +66,14 @@ for pol_idx in pol_incs:
                 continue
 
             # CUT 3: Smoothness
-            dy =   m_zy*0.3 * 0.8 > np.max(np.diff(track_points.y)) > m_zy*0.3 * 1.2
-            if dy:
-                log.info("event: {}, track {}: Seems to have a kink".format(evt, track_id))
+            dy = np.abs(np.diff(track_points.y))
+            if np.max(dy) > CUTS["smoothness"]:
                 continue
 
+            plt.plot(track_points.z[1:], dy)
 
             good.append([track_list[0][track_idx], pol_idx[0][laser_idx]])
-
+    plt.show()
 
     good_tracks.append([item[0] for item in good])
     good_lasers.append([item[1] for item in good])
