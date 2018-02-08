@@ -4,6 +4,7 @@ import larana.geom as geo
 import numpy as np
 
 import matplotlib.pyplot as plt
+import re
 
 logi = laru.setup_logging(123)
 
@@ -16,6 +17,10 @@ CUTS = {"entry_region": 5.,
         "smoothness": 1.}  # maximum stepsize in cm for a single step (acts on kinks)
 
 in_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
+run_number = re.findall('\d+', in_file.split('/')[-1])[0]
+out_file_postfix = ''
+
+plotting = False
 #in_file = "/home/data/uboone/laser/sim/Tracks-lcs1-023_true.root"
 
 tracks = laru.read_tracks(in_file) #, identifier="True")
@@ -70,40 +75,58 @@ for pol_idx in pol_incs:
             if np.max(dy) > CUTS["smoothness"]:
                 continue
 
-            plt.plot(track_points.z[1:], dy)
-
             good.append([track_list[0][track_idx], pol_idx[0][laser_idx]])
-    plt.show()
 
     good_tracks.append([item[0] for item in good])
     good_lasers.append([item[1] for item in good])
 
     # plotting per slice
     fig, ax = laru.make_figure()
-    for track_idx, laser_id in zip(good_tracks[-1], good_lasers[-1]):
-
-        track_id = tracks[track_idx][0]
-        laser_id = lasers[laser_id][0]
-
-        track_points, evt = laru.disassemble_track(tracks[track_idx])
-        laru.plot_track(track_points.x, track_points.y, track_points.z, ax)
-
-    plt.show()
+    # for track_idx, laser_idx in zip(good_tracks[-1], good_lasers[-1]):
+    #
+    #     track_id = tracks[track_idx][0]
+    #     laser_id = lasers[laser_idx][0]
+    #
+    #     track_points, evt = laru.disassemble_track(tracks[track_idx])
+    #
+    #     laser_entry, laser_exit, _, _, _ = laru.disassemble_laser(lasers[laser_idx])
+    #     laru.plot_edges(ax, laser_entry.tolist(), laser_exit.tolist(), linestyle='--', color='g', marker='x', alpha=.1)
+    #     laru.plot_track(track_points.x, track_points.y, track_points.z, ax)
+    #
+    # plt.show()
 
 
 # plotting & checks
-for tr_sl, la_sl in zip(good_tracks, good_lasers):
-    fig, ax = laru.make_figure()
-    for track_idx, laser_id in zip(tr_sl, la_sl):
+if plotting:
+    for tr_sl, la_sl in zip(good_tracks, good_lasers):
+        fig, ax = laru.make_figure()
+        for track_idx, laser_id in zip(tr_sl, la_sl):
 
-        track_id = tracks[track_idx][0]
-        laser_id = lasers[laser_id][0]
+            track_id = tracks[track_idx][0]
+            laser_id = lasers[laser_id][0]
 
-        if track_id != laser_id:
-            raise ValueError("Track Event ID and Laser Event ID mismatch: "
-                             "laser_id {} / track_id {}".format(laser_id, track_id)
-                             )
-        track_points, evt = laru.disassemble_track(tracks[track_idx])
-        laru.plot_track(track_points.x, track_points.y, track_points.z, ax)
-    plt.show()
+            if track_id != laser_id:
+                raise ValueError("Track Event ID and Laser Event ID mismatch: "
+                                 "laser_id {} / track_id {}".format(laser_id, track_id)
+                                 )
+            track_points, evt = laru.disassemble_track(tracks[track_idx])
+            laser_entry, laser_exit, _, _, _ = laru.disassemble_laser(lasers[la_sl])
+
+            laru.plot_track(track_points.x, track_points.y, track_points.z, ax)
+            laru.plot_edges(ax, laser_entry.tolist(), laser_exit.tolist())
+        plt.show()
 print(good_tracks)
+
+track_filename = 'laser-tracks-' + run_number + out_file_postfix + '.npy'
+laser_filename = "laser-data-" + run_number + out_file_postfix + '.npy'
+
+good_tracks_flat = [elem for sublist in good_tracks for elem in sublist]
+good_lasers_flat = [elem for sublist in good_lasers for elem in sublist]
+
+np.save("out/" + track_filename, tracks[good_tracks_flat])
+np.save("out/" + laser_filename, lasers[good_lasers_flat])
+
+print("saved tracks to " + track_filename)
+print("saved laser to " + laser_filename)
+
+print("selected {}/{}".format(len(good_tracks_flat), len(lasers)))
