@@ -6,22 +6,33 @@ import numpy as np
 import matplotlib.pyplot as plt
 import re
 
+# INPUTS
+
+# Input file
+in_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
+run_number = re.findall('\d+', in_file.split('/')[-1])[0]
+
+# Output
+out_base_dir = '/home/data/uboone/laser/processed/'
+out_file_postfix = ''
+
+# Plotting
+plotting = False
+
+# Cuts:
+CUTS = {"entry_region": 5.,
+        "slope": 0.4,  # difference from expected to measured slope that is acceptable
+        "smoothness": 1.}  # maximum stepsize in cm for a single step (acts on kinks)
+
+
+
 logi = laru.setup_logging(123)
 
 log = logi.getLogger('Selecter')
 
 log.info("Well well")
 
-CUTS = {"entry_region": 5.,
-        "slope": 0.4,  # difference from expected to measured slope that is acceptable
-        "smoothness": 1.}  # maximum stepsize in cm for a single step (acts on kinks)
 
-in_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
-run_number = re.findall('\d+', in_file.split('/')[-1])[0]
-out_file_postfix = ''
-
-plotting = False
-#in_file = "/home/data/uboone/laser/sim/Tracks-lcs1-023_true.root"
 
 tracks = laru.read_tracks(in_file) #, identifier="True")
 lasers = laru.read_laser(in_file)
@@ -81,7 +92,7 @@ for pol_idx in pol_incs:
     good_lasers.append([item[1] for item in good])
 
     # plotting per slice
-    fig, ax = laru.make_figure()
+    #fig, ax = laru.make_figure()
     # for track_idx, laser_idx in zip(good_tracks[-1], good_lasers[-1]):
     #
     #     track_id = tracks[track_idx][0]
@@ -123,10 +134,9 @@ laser_filename = "laser-data-" + run_number + out_file_postfix + '.npy'
 good_tracks_flat = [elem for sublist in good_tracks for elem in sublist]
 good_lasers_flat = [elem for sublist in good_lasers for elem in sublist]
 
-np.save("out/" + track_filename, tracks[good_tracks_flat])
-np.save("out/" + laser_filename, lasers[good_lasers_flat])
-
-print("saved tracks to " + track_filename)
-print("saved laser to " + laser_filename)
-
+np.save(out_base_dir + track_filename, tracks[good_tracks_flat])
+np.save(out_base_dir + laser_filename, lasers[good_lasers_flat])
+out_base_dir
+print("saved tracks to " + out_base_dir + track_filename)
+print("saved laser to " + out_base_dir + laser_filename)
 print("selected {}/{}".format(len(good_tracks_flat), len(lasers)))
