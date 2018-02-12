@@ -3,10 +3,10 @@ from larana import lar_utils as laru
 from larana import geom
 import matplotlib.pyplot as plt
 
-tracks_filename = "out/laser-tracks-7267.npy"
-laser_filename = "out/laser-data-7267.npy"
+base_dir = '/home/data/uboone/laser/processed/'
+laser_filename = base_dir + "laser-data-7267.npy"
 
-tracks = np.load(tracks_filename)
+#tracks = np.load(tracks_filename)
 lasers = np.load(laser_filename)
 
 # Output options
@@ -18,12 +18,11 @@ CORRECTION_AZIMU = 2.
 CORRECTION_POLAR = 0.
 
 # Plotting options
-plot = True
+plot = False
 modulo = 100
 
 lasers_corrected = np.zeros(lasers.shape, dtype=lasers[0].dtype)
-
-for idx, (laser, track) in enumerate(zip(lasers, tracks)):
+for idx, laser in enumerate(lasers):
     laser_entry, laser_exit, dir, pos, evt = laru.disassemble_laser(laser)
     current_azimuth = np.arctan(dir.x/dir.z)
     current_polar = np.pi/2 - np.arctan(dir.y/np.sqrt(np.power(dir.z, 2) + np.power(dir.x, 2)))
@@ -54,7 +53,7 @@ for idx, (laser, track) in enumerate(zip(lasers, tracks)):
                              NEW_LASER_POS[0], NEW_LASER_POS[1], NEW_LASER_POS[2])
 
 # Save the data
-out_file = laser_filename.strip('.npy') + "-calib-{}.npy".format(postfix)
+out_file = laser_filename.strip('.npy') + "-calib{}.npy".format(postfix)
 print('write to', out_file)
 np.save(out_file, lasers_corrected)
 
