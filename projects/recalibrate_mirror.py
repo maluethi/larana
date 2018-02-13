@@ -3,31 +3,52 @@ from larana import lar_utils as laru
 from larana import geom
 import matplotlib.pyplot as plt
 
-base_dir = '/home/data/uboone/laser/processed/'
-laser_filename = base_dir + "laser-data-7267.npy"
+def direct_corr(azimu):
+    max_corr = np.deg2rad(0.6)
+    a0 = [0.1085, 0]
+    aM = [-0.419, max_corr]
 
-#tracks = np.load(tracks_filename)
+    m = (a0[1] - aM[1]) / (a0[0] - aM[0])
+    b = m * aM[0] + a0[1]
+
+    print(m, b)
+    new_azimuth = azimu*m + b
+    return new_azimuth
+
+
+
+base_dir = '/home/data/uboone/laser/processed/'
+laser_filename = base_dir + "laser-data-7267-calib.npy"
+tracks_filename = base_dir + "laser-tracks-7267.npy"
+
+tracks = np.load(tracks_filename)
 lasers = np.load(laser_filename)
 
 # Output options
-postfix = ''
+postfix = '-dir'
 
 # Correction options
+directional = False
 NEW_LASER_POS = [102.53, 7.6, 1077.48]
-CORRECTION_AZIMU = 2.
-CORRECTION_POLAR = 0.
+CORRECTION_AZIMU = 0.0
+CORRECTION_POLAR = 0.0
 
 # Plotting options
 plot = False
-modulo = 100
+modulo = 1000
 
 lasers_corrected = np.zeros(lasers.shape, dtype=lasers[0].dtype)
-for idx, laser in enumerate(lasers):
+for idx, (laser, track) in enumerate(zip(lasers, tracks)):
     laser_entry, laser_exit, dir, pos, evt = laru.disassemble_laser(laser)
+    track_points, levt = laru.disassemble_track(track)
     current_azimuth = np.arctan(dir.x/dir.z)
     current_polar = np.pi/2 - np.arctan(dir.y/np.sqrt(np.power(dir.z, 2) + np.power(dir.x, 2)))
 
-    new_azimuth = current_azimuth + np.deg2rad(CORRECTION_AZIMU)
+    if directional:
+        new_azimuth = current_azimuth + direct_corr(current_azimuth)
+    else:
+        new_azimuth = current_azimuth + np.deg2rad(CORRECTION_AZIMU)
+
     new_polar = current_polar + np.deg2rad(CORRECTION_POLAR)
 
     new_dir = np.rec.array([laser['dir.x()'],
@@ -43,8 +64,31 @@ for idx, laser in enumerate(lasers):
     new_dir.x /= l
     new_dir.y /= l
     new_dir.z /= l
-
     new_entry, new_exit = geom.get_tpc_intersection(NEW_LASER_POS, new_dir.tolist())
+
+    if evt == 42914:
+        print(levt)
+        current_azimuth = np.arctan(dir.x / dir.z)
+        new_azimuth = np.arctan(new_dir.x / new_dir.z)
+
+        z_hit_calib = 136.7
+        dz = (z_hit_calib - NEW_LASER_POS[2])
+        dx = NEW_LASER_POS[0]
+        azimu_calib = np.rad2deg(np.arctan(dx/dz))
+        corr = -azimu_calib - np.rad2deg(current_azimuth)
+        print('BLAAAAA ' + str(azimu_calib))
+        print("BLAAAAA " + str(np.rad2deg(current_azimuth)))
+        print("BLAAAAA " + str(np.rad2deg(new_azimuth)))
+        print("BLAAAAA " + str(new_exit))
+        print('BLAAAAA correction: ' + str(corr))
+
+        fig, ax = laru.make_figure()
+        laru.plot_edges(ax, laser_entry.tolist(), laser_exit.tolist(), linestyle='--', color='b', marker='x', alpha=.1)
+        laru.plot_edges(ax, new_entry, new_exit, linestyle='--', color='g', marker='x', alpha=.1)
+        laru.plot_track(track_points.x, track_points.y, track_points.z, ax, linestyle="", marker="o")
+
+        plt.show()
+
 
     lasers_corrected[idx] = (laser[0],
                              new_entry[0], new_entry[1], new_entry[2],
