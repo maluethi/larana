@@ -11,24 +11,23 @@ def direct_corr(azimu):
     m = (a0[1] - aM[1]) / (a0[0] - aM[0])
     b = m * aM[0] + a0[1]
 
-    print(m, b)
     new_azimuth = azimu*m + b
     return new_azimuth
 
 
 
 base_dir = '/home/data/uboone/laser/processed/'
-laser_filename = base_dir + "laser-data-7267-calib.npy"
-tracks_filename = base_dir + "laser-tracks-7267.npy"
+laser_filename = base_dir + "laser-data-7252.npy"
+tracks_filename = base_dir + "laser-tracks-7252.npy"
 
 tracks = np.load(tracks_filename)
 lasers = np.load(laser_filename)
 
 # Output options
-postfix = '-dir'
+postfix = ''
 
 # Correction options
-directional = False
+directional = True
 NEW_LASER_POS = [102.53, 7.6, 1077.48]
 CORRECTION_AZIMU = 0.0
 CORRECTION_POLAR = 0.0
@@ -36,6 +35,9 @@ CORRECTION_POLAR = 0.0
 # Plotting options
 plot = False
 modulo = 1000
+
+if directional:
+    postfix = '-dir'
 
 lasers_corrected = np.zeros(lasers.shape, dtype=lasers[0].dtype)
 for idx, (laser, track) in enumerate(zip(lasers, tracks)):
