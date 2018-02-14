@@ -132,7 +132,7 @@ def calc_overlap(laser_pos, rings=None, edgs=None, wid=None, weights=(.2, 0.2, 1
 
 # Loading the histogram from file, or calculate a new one.
 # It takes quite a while, therefore we store them for later use.
-gen_histo = True
+gen_histo = False
 track_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
 #track_file = "/home/data/uboone/laser/7252/tracks/Tracks-7252.root"
 n_bins = 1000
@@ -161,8 +161,8 @@ res = minimize(iter, laser_pos0, bounds=[(-1000, -1), [-20, 20]],
                options={'xtol': 1e-8, 'disp': True})
 print(res)
 
-ring_26 = 26 * center_to_center
-Lx = ring_26 - res.x[1]
+ring_26 = 25 * center_to_center
+Lx = ring_26 + center_to_center / 2 - res.x[1]
 Ly = res.x[0]
 
 print("------------------------------------")
@@ -206,4 +206,3 @@ plt.xlabel("z [cm]")
 plt.ylabel("y [cm]")
 
 plt.show()
-
