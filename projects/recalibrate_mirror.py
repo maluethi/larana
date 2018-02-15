@@ -3,10 +3,10 @@ from larana import lar_utils as laru
 from larana import geom
 import matplotlib.pyplot as plt
 
-def direct_corr(azimu):
-    max_corr = np.deg2rad(0.6)
-    a0 = [0.1085, 0]
-    aM = [-0.419, max_corr]
+def direct_corr(azimu, ax=[]):
+    max_corr = np.deg2rad(-0.6)
+    a0 = [-0.1085, 0] # The calibration
+    aM = [0.4, max_corr]
 
     m = (a0[1] - aM[1]) / (a0[0] - aM[0])
     b = m * aM[0] + a0[1]
@@ -17,8 +17,8 @@ def direct_corr(azimu):
 
 
 base_dir = '/home/data/uboone/laser/processed/'
-laser_filename = base_dir + "laser-data-7252.npy"
-tracks_filename = base_dir + "laser-tracks-7252.npy"
+laser_filename = base_dir + "laser-data-7267-calib.npy"
+tracks_filename = base_dir + "laser-tracks-7267.npy"
 
 tracks = np.load(tracks_filename)
 lasers = np.load(laser_filename)
@@ -29,12 +29,14 @@ postfix = ''
 # Correction options
 directional = True
 NEW_LASER_POS = [102.53, 7.6, 1077.48]
-CORRECTION_AZIMU = 0.0
-CORRECTION_POLAR = 0.0
+CORRECTION_AZIMU = -0.020624671357
+CORRECTION_POLAR = -0.55
+
+# for 7267: 1) CORRECTION_AZIMU = -0.020624671357
 
 # Plotting options
 plot = False
-modulo = 1000
+modulo = 100
 
 if directional:
     postfix = '-dir'
@@ -43,29 +45,34 @@ lasers_corrected = np.zeros(lasers.shape, dtype=lasers[0].dtype)
 for idx, (laser, track) in enumerate(zip(lasers, tracks)):
     laser_entry, laser_exit, dir, pos, evt = laru.disassemble_laser(laser)
     track_points, levt = laru.disassemble_track(track)
-    current_azimuth = np.arctan(dir.x/dir.z)
-    current_polar = np.pi/2 - np.arctan(dir.y/np.sqrt(np.power(dir.z, 2) + np.power(dir.x, 2)))
+
+    ldir = np.rec.array([0,0,0], dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
+    lnew_dir = np.rec.array([0,0,0], dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
+    new_dir = np.rec.array([0, 0, 0], dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
+
+    ldir.x = -dir.z
+    ldir.y = dir.x
+    ldir.z = dir.y
+
+    r = 1.
+    current_polar = np.arccos(ldir.z/r)
+    current_azimuth = np.arctan(ldir.y/ldir.x)
 
     if directional:
         new_azimuth = current_azimuth + direct_corr(current_azimuth)
+        new_polar = current_polar
     else:
         new_azimuth = current_azimuth + np.deg2rad(CORRECTION_AZIMU)
+        new_polar = current_polar + np.deg2rad(CORRECTION_POLAR)
 
-    new_polar = current_polar + np.deg2rad(CORRECTION_POLAR)
+    lnew_dir.x = np.sin(new_polar) * np.cos(new_azimuth)
+    lnew_dir.y = np.sin(new_polar) * np.sin(new_azimuth)
+    lnew_dir.z = np.cos(new_polar)
 
-    new_dir = np.rec.array([laser['dir.x()'],
-                            laser['dir.y()'],
-                            laser['dir.z()']],
-                           dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
+    new_dir.x = lnew_dir.y
+    new_dir.y = lnew_dir.z
+    new_dir.z = -lnew_dir.x
 
-    new_dir.x = 1.0 * np.sign(dir.x)
-    new_dir.z = new_dir.x / np.tan(new_azimuth)
-    new_dir.y = - np.tan(new_polar - np.pi / 2) * np.sqrt(np.power(new_dir.z, 2) + np.power(new_dir.x, 2))
-
-    l = np.sqrt(np.sum(np.power(new_dir.tolist(), 2)))
-    new_dir.x /= l
-    new_dir.y /= l
-    new_dir.z /= l
     new_entry, new_exit = geom.get_tpc_intersection(NEW_LASER_POS, new_dir.tolist())
 
     if evt == 42914:
