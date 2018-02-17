@@ -4,7 +4,7 @@ from larana import geom
 import matplotlib.pyplot as plt
 
 def direct_corr(azimu, ax=[]):
-    max_corr = np.deg2rad(-0.6)
+    max_corr = 0.95 * np.deg2rad(-0.6)
     a0 = [-0.1085, 0] # The calibration
     aM = [0.4, max_corr]
 
@@ -17,8 +17,8 @@ def direct_corr(azimu, ax=[]):
 
 
 base_dir = '/home/data/uboone/laser/processed/'
-laser_filename = base_dir + "laser-data-7267-calib.npy"
-tracks_filename = base_dir + "laser-tracks-7267.npy"
+laser_filename = base_dir + "laser-data-7252-calib.npy"
+tracks_filename = base_dir + "laser-tracks-7252.npy"
 
 tracks = np.load(tracks_filename)
 lasers = np.load(laser_filename)
@@ -29,7 +29,7 @@ postfix = ''
 # Correction options
 directional = True
 NEW_LASER_POS = [102.53, 7.6, 1077.48]
-CORRECTION_AZIMU = -0.020624671357
+CORRECTION_AZIMU = -0.020624671357 # scaling: *1.03
 CORRECTION_POLAR = -0.55
 
 # for 7267: 1) CORRECTION_AZIMU = -0.020624671357
