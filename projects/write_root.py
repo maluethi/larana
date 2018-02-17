@@ -9,18 +9,18 @@ import numpy as np
 
 base_dir = '/home/data/uboone/laser/processed/'
 
-side = "downstream"
+side = "upstream"
 
 downsample = 1
 
-track_filenames = ["laser-tracks-7267.npy"]
-laser_filenames = ["laser-data-7267-calib-dir.npy"]
+track_filenames = ["/sim/laser-tracks-24.npy"]
+laser_filenames = ["/sim/laser-data-24.npy"]
 
 track_paths = [base_dir + filename for filename in track_filenames]
 laser_paths = [base_dir + filename for filename in laser_filenames]
 
 sides = {"upstream": 1, "downstream": 2}
-output_file = base_dir + "laserbeams-7252.root"
+output_file = base_dir + "beams/"+ "laserbeams-24.root"
 
 Vec = stl.vector(Vector3)
 track = Vec()
@@ -48,7 +48,7 @@ with root_open(output_file, "recreate"):
             laser_exit = np.rec.array([laser_data[event][4], laser_data[event][5], laser_data[event][6]],
                                       dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
 
-            for idx in range(len(x)):
+            for idx in range(int(len(x)/downsample)):
                 track.push_back(Vector3(x[idx*downsample], y[idx*downsample], z[idx*downsample]))
 
             track_tree.track = track
