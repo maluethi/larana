@@ -3,18 +3,19 @@ from larana.geom import Laser
 from pprint import pprint
 from root_numpy import array2root
 
-run_number = 11
+run_number = 23
 
 laser_id = 2
-azimu_start = 5
-azimu_end = 11
-azimu_steps = 1
-polar_start = 150
-polar_end = 210
-polar_steps = 3
+azimu_start = 35
+azimu_end = -5
+azimu_steps = 43
+polar_start = 65
+polar_end = 115
+
+polar_steps = 24
 
 # sim laser location (for symmetric generation)
-sim_laser_pos = [120., 150., 1036.35/2]
+sim_laser_pos = [120., 0., 1075.]
 
 # generation
 laser_scan = generate_span(laser_id, azimu_start, azimu_end, azimu_steps, polar_start, polar_end, polar_steps)
@@ -25,7 +26,11 @@ entry_points = [get_tpc_intersection(sim_laser_pos, direct)[0] for direct in ubo
 pprint(entry_points)
 # laser
 la = Laser(laser_id)
-raw_directions = [[la.polar_laser2tick(pol), la.azimu_laser2raw(azi)] for azi, pol, _ in laser_scan]
+raw_directions = [[la.polar_laser2tick(np.rad2deg(pol)), la.azimu_laser2raw(azi)] for azi, pol, _ in laser_scan]
+
+print(la.laser_deg_offset)
+print(la._lcs2_polar_true_angle)
+pprint(raw_directions)
 #pprint(raw_directions)
 
 # time map
@@ -33,7 +38,7 @@ map = np.arange(0, len(laser_scan))
 arr = np.array(map, dtype=[("map", np.uint32)])
 
 # writing to file
-outdir = '/home/matthias/workspace/larana/projects/out/lcs2/'
+outdir = '/home/matthias/workspace/larana/projects/out/lcs{:d}/'.format(laser_id)
 gen_textfile(outdir + 'input-{:d}.txt'.format(run_number), entry_points, uboone_directions)
 gen_laserfile(outdir + 'Run-{:d}.txt'.format(run_number), raw_directions, laser_id=laser_id)
 array2root(arr, outdir + 'TimeMap-{:d}.root'.format(run_number), mode='recreate')
