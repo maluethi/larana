@@ -34,7 +34,7 @@ def get_z_vector():
 
 
 base_dir = '/home/data/uboone/laser/processed/'
-laser_filename = base_dir + "laser-data-7252-calib-dir.npy"
+laser_filename = base_dir + "laser-data-7252-calib-calib-dir.npy"
 tracks_filename = base_dir + "laser-tracks-7252.npy"
 
 
@@ -128,7 +128,7 @@ for idx in range(len(tracks)):
     lasers[idx][2] = laser_entry.y
     lasers[idx][3] = laser_entry.z
     lasers[idx][4] = laser_exit.x
-    lasers[idx][5] = laser_exit.y - 7
+    lasers[idx][5] = laser_exit.y
     lasers[idx][6] = laser_exit.z
 
     #plotting_args = {"color": None}
