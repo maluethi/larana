@@ -52,7 +52,7 @@ rings = np.arange(first_ring - 1. * stepsize, 8000, stepsize)
 for i, ring in enumerate(rings):
 
     ring = ring
-    plt.text(ring, 100, str(i))
+    plt.text(ring, 100, str(i-1))
     rect = Rectangle([ring-10, 0], 20, 400.0, facecolor='red', alpha=0.5)
     ax.add_patch(rect)
 
