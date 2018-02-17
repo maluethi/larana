@@ -9,7 +9,10 @@ import re
 # INPUTS
 
 # Input file
-in_file = "/home/data/uboone/laser/7267/tracks/Tracks-7267-roi.root"
+in_file = "/home/data/uboone/laser/sim/Tracks-lcs1-024.root"
+in_file = "/home/data/uboone/laser/7205/tracks/Tracks-7275-pndr-digit.root"
+#in_file = "/home/data/uboone/laser/scratch/Tracks-7267-858-exp.root"
+#in_file = "/home/data/uboone/laser/sim/Tracks-lcs1-022-difff.root"
 run_number = re.findall('\d+', in_file.split('/')[-1])[0]
 
 # Output
@@ -19,10 +22,10 @@ out_file_postfix = ''
 # Plotting
 plotting = False
 
-# Cuts:
-CUTS = {"entry_region": 5.,
-        "slope": 0.4,  # difference from expected to measured slope that is acceptable
-        "smoothness": 1.}  # maximum stepsize in cm for a single step (acts on kinks)
+# Cuts:Tracks-7275-pndr-digit.root
+CUTS = {"entry_region": 10.,
+        "slope": 1,  # difference from expected to measured slope that is acceptable
+        "smoothness": 2}  # maximum stepsize in cm for a single step (acts on kinks)
 
 
 
@@ -58,6 +61,7 @@ for pol_idx in pol_incs:
 
         # calculate slope
         d = [ex - en for ex, en in zip(laser_exit.tolist(), laser_entry.tolist())]
+        print(d)
 
         log.info("Event {}".format(evt))
         track_list = np.where(track_event_id == evt)
@@ -68,8 +72,17 @@ for pol_idx in pol_incs:
 
             # -------- Cuts should go in here and escape the loop -------- #
             # CUT 1: Entry region cut
-            max_idx = np.argmax(track_points.z)
-            if geo.distance(track_points[max_idx], laser_entry.tolist()) > CUTS["entry_region"]:
+            if laser_entry.z > 1030:
+                look_idx = np.argmax(track_points.z)
+
+            elif laser_entry.z < 20:
+                look_idx = np.argmin(track_points.z)
+            else:
+                raise ValueError("Laser side undefined {}".format(laser_exit.z))
+                #look_idx = np.argmax(track_points.z)
+
+            dentry = geo.distance(track_points[look_idx], laser_entry.tolist())
+            if dentry > CUTS["entry_region"]:
                 log.info("event: {}, track {}: Outside entry region".format(evt, track_id))
                 continue
 
@@ -78,12 +91,15 @@ for pol_idx in pol_incs:
             m_zy = d[1]/d[2]
 
             if np.abs((m_zy - m)/m_zy) > CUTS["slope"]:
-                log.info("event: {}, track {}: Slope is not within expectations".format(evt, track_id))
                 continue
 
             # CUT 3: Smoothness
             dy = np.abs(np.diff(track_points.y))
             if np.max(dy) > CUTS["smoothness"]:
+                continue
+
+            # CUT 4:
+            if laser_exit.x <= 1.:
                 continue
 
             good.append([track_list[0][track_idx], pol_idx[0][laser_idx]])
@@ -136,7 +152,7 @@ good_lasers_flat = [elem for sublist in good_lasers for elem in sublist]
 
 np.save(out_base_dir + track_filename, tracks[good_tracks_flat])
 np.save(out_base_dir + laser_filename, lasers[good_lasers_flat])
-out_base_dir
+
 print("saved tracks to " + out_base_dir + track_filename)
 print("saved laser to " + out_base_dir + laser_filename)
 print("selected {}/{}".format(len(good_tracks_flat), len(lasers)))
