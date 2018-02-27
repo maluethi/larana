@@ -2,23 +2,32 @@ import numpy as np
 from larana import lar_utils as laru
 from larana import geom
 import matplotlib.pyplot as plt
+import argparse
+from collections import namedtuple
+pt = namedtuple("point","x y")
 
 def direct_corr(azimu, ax=[]):
-    max_corr = 0.95 * np.deg2rad(-0.6)
-    a0 = [-0.1085, 0] # The calibration
-    aM = [0.4, max_corr]
+    max_corr = 0.95 * -np.deg2rad(-0.15)
 
-    m = (a0[1] - aM[1]) / (a0[0] - aM[0])
-    b = m * aM[0] + a0[1]
+    p0 = pt(-0.1085, 0)
+    p1 = pt(-0.4, max_corr)
 
+    m = (p1.y - p0.y) / (p1.x - p0.x)
+    b = (p1.x * p0.y - p0.x * p1.y) / (p1.x - p0.x)
     new_azimuth = azimu*m + b
     return new_azimuth
 
+parser = argparse.ArgumentParser(description='Recalibrate mirror position / angles')
+parser.add_argument('-p', '--position', type=float, nargs=3, dest='pos', help='new laser position')
+parser.add_argument('-a', '--azimuth', type=float, nargs=1, dest='azi', help='azimuth offset')
+parser.add_argument('-pl', '--polar', type=float, nargs=1, dest='pol', help='polar offset')
 
+args = parser.parse_args()
+print(args.pos, args.azi, args.pol)
 
 base_dir = '/home/data/uboone/laser/processed/'
-laser_filename = base_dir + "laser-data-7252-calib.npy"
-tracks_filename = base_dir + "laser-tracks-7252.npy"
+laser_filename = base_dir + "laser-data-7267smooth.npy"
+tracks_filename = base_dir + "laser-tracks-7267smooth.npy"
 
 tracks = np.load(tracks_filename)
 lasers = np.load(laser_filename)
@@ -27,12 +36,14 @@ lasers = np.load(laser_filename)
 postfix = ''
 
 # Correction options
-directional = True
+directional = False
 NEW_LASER_POS = [102.53, 7.6, 1077.48]
-CORRECTION_AZIMU = -0.020624671357 # scaling: *1.03
-CORRECTION_POLAR = -0.55
+#NEW_LASER_POS = [120, 0, 1075]
+CORRECTION_AZIMU =  -0.34955#-0.34955 #0.020624671357 # * 1.03 #scaling: *1.03
+CORRECTION_POLAR = -0.55    #-0.55
 
-# for 7267: 1) CORRECTION_AZIMU = -0.020624671357
+# for 7267: 1) CORRECTION_AZIMU = -0.369780, CORRECTION_POLAR = -0.5
+# for 7252: CORRECTION_AZIMU = -0.34955 CORRECTION_POLAR = -0.55
 
 # Plotting options
 plot = False
@@ -45,7 +56,6 @@ lasers_corrected = np.zeros(lasers.shape, dtype=lasers[0].dtype)
 for idx, (laser, track) in enumerate(zip(lasers, tracks)):
     laser_entry, laser_exit, dir, pos, evt = laru.disassemble_laser(laser)
     track_points, levt = laru.disassemble_track(track)
-
     ldir = np.rec.array([0,0,0], dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
     lnew_dir = np.rec.array([0,0,0], dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
     new_dir = np.rec.array([0, 0, 0], dtype=[('x', 'f'), ('y', 'f'), ('z', 'f')])
