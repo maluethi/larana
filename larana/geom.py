@@ -14,6 +14,17 @@ lin_convert = 0.3499  # conversion from mm to deg
 err_convert = 0.0002  # error on coversion from mm to deg
 lin_tick = 0.00001  # conversion from tick to mm
 
+
+def get_closest_distance(p0, p1, m0, m1):
+    t1 = vtk.mutable(0)
+    t2 = vtk.mutable(0)
+
+    p = [-1., -1., -1.]
+    m = [-1., -1., -1.]
+    d = vtk.vtkLine.DistanceBetweenLineSegments(p0,p1,m0,m1, p, m, t1, t2 )
+    return np.sqrt(d)
+
+
 def get_tpc_intersection(point, direction, box=None):
     """ Abstract class to calculate the TPC crossings """
     if box is None:
