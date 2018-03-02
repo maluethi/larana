@@ -16,13 +16,15 @@ lin_tick = 0.00001  # conversion from tick to mm
 
 
 def get_closest_distance(p0, p1, m0, m1):
+    """ Get the distance of closest approach of two lines. Also returns the points
+    on this line"""
     t1 = vtk.mutable(0)
     t2 = vtk.mutable(0)
 
     p = [-1., -1., -1.]
     m = [-1., -1., -1.]
-    d = vtk.vtkLine.DistanceBetweenLineSegments(p0,p1,m0,m1, p, m, t1, t2 )
-    return np.sqrt(d)
+    d = vtk.vtkLine.DistanceBetweenLineSegments(p0, p1, m0, m1, p, m, t1, t2)
+    return np.sqrt(d), p, m
 
 
 def get_tpc_intersection(point, direction, box=None):
