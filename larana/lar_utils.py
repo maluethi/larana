@@ -51,6 +51,14 @@ def plot_edges(axes, start, end, **kwargs):
         axes[1].plot([start[2], end[2]], [start[1], end[1]], **kwargs)
         axes[2].plot([start[0], end[0]], [start[1], end[1]], **kwargs)
 
+
+def plot_point(axes, pt):
+    x, y, z = pt
+    axes[0].plot(z, x, 'o')
+    axes[1].plot(z, y, 'o')
+    axes[2].plot(x, y, 'o')
+
+
 def plot_endpoints(x, y, z, axes, laser=[], **kwargs):
     ax_zx, ax_zy, ax_xy = axes
 
@@ -361,13 +369,17 @@ def write_to_root(tracks, laser):
     f.close()
 
 
-def get_histos(filename):
+def get_histos(filename, error=False):
     """ Read root file containing output of LaserFieldCalib  """
     dist_map = namedtuple("dist_map", "x y z")
-    axes = ['X', 'Y', 'Z']
+    if error is False:
+        axes = ['X', 'Y', 'Z']
+    else:
+        axes = ['X_Error', 'Y_Error', 'Z_Error']
     maps = []
     for ax in axes:
         rfile = ROOT.TFile(filename)
+        print(ax)
         hist = rfile.Get('Reco_Displacement_' + ax)
         histo = rn.hist2array(hist)
         maps.append(histo)
