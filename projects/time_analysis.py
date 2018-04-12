@@ -56,15 +56,13 @@ def get_histo(in_file):
 
         previous_event = event
 
-
     return [maxima, std_maxima]
 
 
-base_dir = sys.argv[1]
-if base_dir is None:
+try:
+    file_path = sys.argv[1]
+except:
     file_path = '/home/data/uboone/laser/7275/rwa/'
-else:
-    file_path = base_dir
 
 in_files = glob.glob(file_path + 'Rw*[0-3][0-9]*')
 
