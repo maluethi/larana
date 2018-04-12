@@ -51,13 +51,13 @@ def closest_distance(track1, track2):
     return min_d, min_pt1, min_pt2
 
 base_dir = '/home/data/uboone/laser/processed/'
-laser_file1 = base_dir + "laser-data-7267-smooth-calib.npy"
-track_file1 = base_dir + "laser-tracks-7267-smooth.npy"
-laser_file2 = base_dir + "laser-data-7252-smooth-calib-inv.npy"
-track_file2 = base_dir + "laser-tracks-7252-smooth-inv.npy"
+laser_file1 = base_dir + "laser-data-31-cross.npy"
+track_file1 = base_dir + "laser-tracks-31-cross.npy"
+laser_file2 = base_dir + "laser-data-23-cross.npy"
+track_file2 = base_dir + "laser-tracks-23-cross.npy"
 
 
-stride = 10
+stride = 1
 
 laser1 = np.load(laser_file1)[::stride]
 laser2 = np.load(laser_file2)[::stride]
@@ -99,5 +99,5 @@ for idx1, (l1, t1) in enumerate(zip(laser1, track1)):
                 laru.plot_edges(ax, pt1, pt2)
                 plt.show()
 
-with open("./out/cross.txt", "wb+") as fp:
+with open("./out/cross-reco.txt", "wb+") as fp:
     pickle.dump(cross, fp)

@@ -8,19 +8,20 @@ import numpy as np
 # you can specify a base directory and the
 
 base_dir = '/home/data/uboone/laser/processed/'
+run_sides = {1: 'upstream', 2: 'downstream', 21: 'downstream', 7252: "upstream", 7267: 'downstream'}
+run = 7252
 
-side = "upstream"
-
+side = run_sides[run]
 downsample = 1
 
-track_filenames = ["/sim/laser-tracks-24.npy"]
-laser_filenames = ["/sim/laser-data-24.npy"]
+track_filenames = ["laser-tracks-{}-smooth-inv.npy".format(run)]
+laser_filenames = ["laser-data-{}-smooth-calib-inv.npy".format(run)]
 
 track_paths = [base_dir + filename for filename in track_filenames]
 laser_paths = [base_dir + filename for filename in laser_filenames]
 
 sides = {"upstream": 1, "downstream": 2}
-output_file = base_dir + "beams/"+ "laserbeams-24.root"
+output_file = base_dir + "beams/" + "laserbeams-{}-smooth.root".format(run)
 
 Vec = stl.vector(Vector3)
 track = Vec()
