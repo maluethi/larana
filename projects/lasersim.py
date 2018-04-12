@@ -3,19 +3,26 @@ from larana.geom import Laser
 from pprint import pprint
 from root_numpy import array2root
 
-run_number = 23
+run_number = 32
 
-laser_id = 2
-azimu_start = 35
-azimu_end = -5
-azimu_steps = 43
-polar_start = 65
-polar_end = 115
+#laser_id = 1
+#azimu_start = 34
+#azimu_end = -6
+#azimu_steps = 42
+#polar_start = 64
+#polar_end = 117
+#polar_steps = 23
 
-polar_steps = 24
+laser_id = 1
+azimu_start = 10
+azimu_end = -10
+azimu_steps = 3
+polar_start = 80
+polar_end = 100
+polar_steps = 3
 
 # sim laser location (for symmetric generation)
-sim_laser_pos = [120., 0., 1075.]
+sim_laser_pos = [122., -5., -30.]
 
 # generation
 laser_scan = generate_span(laser_id, azimu_start, azimu_end, azimu_steps, polar_start, polar_end, polar_steps)

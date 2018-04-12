@@ -9,24 +9,27 @@ import re
 # INPUTS
 
 # Input file
-in_file = "/home/data/uboone/laser/sim/Tracks-lcs1-024.root"
-in_file = "/home/data/uboone/laser/7205/tracks/Tracks-7275-pndr-digit.root"
+#in_file = "/home/data/uboone/laser/sim/Tracks-lcs2-023_true.root"
+#in_file = "/home/data/uboone/laser/7252/tracks/Tracks-7252.root"
 #in_file = "/home/data/uboone/laser/scratch/Tracks-7267-858-exp.root"
-#in_file = "/home/data/uboone/laser/sim/Tracks-lcs1-022-difff.root"
+in_file = "/home/data/uboone/laser/sim/Tracks-lcs1-031-exp.root"
 run_number = re.findall('\d+', in_file.split('/')[-1])[0]
 
 # Output
 out_base_dir = '/home/data/uboone/laser/processed/'
-out_file_postfix = ''
+out_file_postfix = '-cross'
 
 # Plotting
 plotting = False
 
 # Cuts:Tracks-7275-pndr-digit.root
-CUTS = {"entry_region": 10.,
-        "slope": 1,  # difference from expected to measured slope that is acceptable
-        "smoothness": 2}  # maximum stepsize in cm for a single step (acts on kinks)
-
+CUTS = {"entry_region": 15.,
+        "slope": 0.4,  # difference from expected to measured slope that is acceptable
+        "smoothness": 0.12}  # maximum stepsize in cm for a single step (acts on kinks)
+# Cuts:Tracks-7275-pndr-digit.root
+# CUTS = {"entry_region": 5000.,
+#         "slope": 3,  # difference from expected to measured slope that is acceptable
+#         "smoothness": 1000}  # maximum stepsize in cm for a single step (acts on kinks)
 
 
 logi = laru.setup_logging(123)
@@ -35,12 +38,10 @@ log = logi.getLogger('Selecter')
 
 log.info("Well well")
 
-
-
-tracks = laru.read_tracks(in_file) #, identifier="True")
+tracks = laru.read_tracks(in_file, identifier='Tracks')
 lasers = laru.read_laser(in_file)
 
-laser_id = 2
+laser_id = 1
 
 laser_pos = geo.LASER_POS[laser_id]
 
@@ -52,6 +53,8 @@ pol_incs = laru.find_unique_polar_idx(lasers)
 good_tracks = []
 good_lasers = []
 
+dd = []
+
 # process tracks in bunches of constant polar angles
 for pol_idx in pol_incs:
     good = []
@@ -61,7 +64,6 @@ for pol_idx in pol_incs:
 
         # calculate slope
         d = [ex - en for ex, en in zip(laser_exit.tolist(), laser_entry.tolist())]
-        print(d)
 
         log.info("Event {}".format(evt))
         track_list = np.where(track_event_id == evt)
@@ -82,6 +84,8 @@ for pol_idx in pol_incs:
                 #look_idx = np.argmax(track_points.z)
 
             dentry = geo.distance(track_points[look_idx], laser_entry.tolist())
+            dd.append(dentry)
+            print("Hree {}, {}, {}, {}".format(look_idx, dentry, track_points[look_idx], laser_entry.tolist()))
             if dentry > CUTS["entry_region"]:
                 log.info("event: {}, track {}: Outside entry region".format(evt, track_id))
                 continue
@@ -91,19 +95,28 @@ for pol_idx in pol_incs:
             m_zy = d[1]/d[2]
 
             if np.abs((m_zy - m)/m_zy) > CUTS["slope"]:
+                log.info("event: {}, track {}: slope".format(evt, track_id))
                 continue
 
             # CUT 3: Smoothness
-            dy = np.abs(np.diff(track_points.y))
-            if np.max(dy) > CUTS["smoothness"]:
-                continue
+            m_zy, b_zy = laru.calc_line([laser_entry.z, laser_entry.y], [laser_exit.z, laser_exit.y])
+            true_zy = np.polyval([m_zy, b_zy], track_points.z)
 
+            res_zy = track_points.y - true_zy
+
+            dy = np.abs(np.gradient(res_zy))
+
+            if np.max(dy) > CUTS["smoothness"]:
+                log.info("event: {}, track {}: smothness".format(evt, track_id))
+                #plt.plot(freq, np.abs(sp), 'rx')
+                continue
+            #plt.plot(freq, np.abs(sp), 'bo')
             # CUT 4:
             if laser_exit.x <= 1.:
                 continue
 
             good.append([track_list[0][track_idx], pol_idx[0][laser_idx]])
-
+    plt.show()
     good_tracks.append([item[0] for item in good])
     good_lasers.append([item[1] for item in good])
 
@@ -143,6 +156,9 @@ if plotting:
             laru.plot_edges(ax, laser_entry.tolist(), laser_exit.tolist())
         plt.show()
 print(good_tracks)
+
+plt.hist(dd, bins=50)
+plt.show()
 
 track_filename = 'laser-tracks-' + run_number + out_file_postfix + '.npy'
 laser_filename = "laser-data-" + run_number + out_file_postfix + '.npy'

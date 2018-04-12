@@ -20,8 +20,8 @@ def direct_corr(azimu, ax=[]):
 
 
 base_dir = '/home/data/uboone/laser/processed/'
-laser_filename = base_dir + "laser-data-7267-smooth-calib.npy"
-tracks_filename = base_dir + "laser-tracks-7267smooth.npy"
+#laser_filename = base_dir + "laser-data-7267-smooth-calib.npy"
+#tracks_filename = base_dir + "laser-tracks-7267smooth.npy"
 
 laser_filename = base_dir + "laser-data-23-cross.npy"
 tracks_filename = base_dir + "laser-tracks-23-cross.npy"
@@ -32,17 +32,24 @@ lasers = np.load(laser_filename)
 # Output options
 postfix = ''
 
-for dx in np.linspace(-2,2,21):
+rng = [-2, 2.5]
+stp = 0.5
+rng = np.arange(rng[0], rng[1], stp)
+xrange, yrange, zrange = np.meshgrid(rng, rng, rng)
 
-    postfix = str(dx)
+print(xrange, yrange, zrange)
+
+for dx, dy, dz in zip(xrange.flatten(), yrange.flatten(), zrange.flatten()):
+
+    postfix = "-az+0.1_x_" + str(dx) + "_y_" + str(dy) + "_z_" + str(dz)
 
     # Correction options
     directional = False
     NEW_LASER_POS = [103.53, 9.6, 1080.48]
-    NEW_LASER_POS = [102.53, 9.6, 1077.48]
-    NEW_LASER_POS = [120 + dx, 0, 1075]
-    CORRECTION_AZIMU =  0#-0.34955 #0.020624671357 # * 1.03 #scaling: *1.03
-    CORRECTION_POLAR = 0    #-0.55
+    #NEW_LASER_POS = [102.53+dx, 9.6+dy, 1077.48+dz]
+    NEW_LASER_POS = [120 + dx, 0 + dz, 1075 + dz]
+    CORRECTION_AZIMU =  +0.1#-0.34955 #0.020624671357 # * 1.03 #scaling: *1.03
+    CORRECTION_POLAR = 0   #-0.55
 
     # For wire plane cross correction:
     # for 7267: 1) CORRECTION_AZIMU = -0.369780, CORRECTION_POLAR = -0.5

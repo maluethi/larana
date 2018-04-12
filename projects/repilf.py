@@ -34,8 +34,8 @@ def get_z_vector():
 
 
 base_dir = '/home/data/uboone/laser/processed/'
-laser_filename = base_dir + "laser-data-7252-calib-calib-dir.npy"
-tracks_filename = base_dir + "laser-tracks-7252.npy"
+laser_filename = base_dir + "laser-data-7252-smooth-calib.npy"
+tracks_filename = base_dir + "laser-tracks-7252-smooth.npy"
 
 
 interp = False
@@ -152,7 +152,7 @@ print('output written to:')
 print(out_laser_filename)
 print(out_track_filename)
 
-np.save(out_track_filename, tracks)
-np.save(out_laser_filename, lasers)
+np.save(out_track_filename, tracks[1:])
+np.save(out_laser_filename, lasers[1:])
 
 
