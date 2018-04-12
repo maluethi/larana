@@ -26,6 +26,28 @@ def correct(track):
     return 'track {} is ok'.format(track)
 
 
+def drift_speed(Efield, T=87):
+    """
+        Drift speed function in LAr from arXiv:1508.07059
+            In:     Efield: kV/cm
+                    T:      K
+            Out:    v       cm/s
+    """
+    a0 = 551.6
+    a1 = 7953.7
+    a2 = 4440.43
+    a3 = 4.29
+    a4 = 43.63
+    a5 = 0.2053
+    T0 = 89  # K
+
+    mu = a0 + a1*Efield + a2 * np.power(Efield, 3/2) + a3 * np.power(Efield, 5/2)
+    mu = mu / (1 + a1/a0 * Efield + a4 * np.power(Efield,2) + a5 * np.power(Efield,3))
+    mu = mu * np.power(T / T0, -3/2)
+    v = mu * Efield * 1000
+    return v
+
+
 def load_tracks(file):
     return [0, 1, 2, 3, 4, 5]
 
@@ -52,11 +74,11 @@ def plot_edges(axes, start, end, **kwargs):
         axes[2].plot([start[0], end[0]], [start[1], end[1]], **kwargs)
 
 
-def plot_point(axes, pt):
+def plot_point(axes, pt, **kwargs):
     x, y, z = pt
-    axes[0].plot(z, x, 'o')
-    axes[1].plot(z, y, 'o')
-    axes[2].plot(x, y, 'o')
+    axes[0].plot(z, x, **kwargs)
+    axes[1].plot(z, y, **kwargs)
+    axes[2].plot(x, y, **kwargs)
 
 
 def plot_endpoints(x, y, z, axes, laser=[], **kwargs):
@@ -126,8 +148,11 @@ def assemble_line(laser_entry, laser_exit):
     return assemble_lines([laser_df])
 
 
-def make_figure(tpc_limits=True, tpc_box=False, link_axes=True):
-    fig = plt.figure(figsize=(8, 5.), dpi=160)
+def make_figure(tpc_limits=True, tpc_box=False, link_axes=True, tex=False):
+    if tex:
+        fig = plt.figure()
+    else:
+        fig = plt.figure(figsize=(8, 5.), dpi=160)
 
     gs = gridspec.GridSpec(3, 3)
 
@@ -143,7 +168,7 @@ def make_figure(tpc_limits=True, tpc_box=False, link_axes=True):
 
     axes = [ax_zx, ax_zy, ax_xy]
     if tpc_limits:
-        set_tpc_limits(axes)
+        set_tpc_limits(axes, tex=tex)
 
     if tpc_box:
         plot_tpc_box(axes)
@@ -155,15 +180,20 @@ def make_figure(tpc_limits=True, tpc_box=False, link_axes=True):
         ax_zx.callbacks.connect("ylim_changed", ax_xy.update_xlim)
         ax_xy.callbacks.connect("xlim_changed", ax_zy.update_ylim)
 
+    if tex:
+        gs.tight_layout(fig)
+        gs.update(hspace=0.3,wspace=0.1)
+
     return fig, axes
 
 
-def set_tpc_limits(axes):
+def set_tpc_limits(axes, tex=False):
     ax_zx, ax_zy, ax_xy = axes
 
     ax_zx.set_xlim([0, 1036.8])
     ax_zx.set_ylim([0, 256.])
-    ax_zx.set_xlabel("z [cm]")
+    if not tex:
+        ax_zx.set_xlabel("z [cm]")
     ax_zx.set_ylabel("x [cm]")
 
     ax_zy.set_xlim([0, 1036.8])
