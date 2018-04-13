@@ -25,7 +25,8 @@ def get_gauss_fit(x, y, center_guess):
 
 
 def get_histo(in_file):
-    print("Processing:", in_file)
+    mid = mp.current_process()._identity[0]
+    print("[{}] Processing: {}".format(mid, in_file))
     raw = laru.read_raw(in_file)
 
     event_ids = np.unique([wire[0] for wire in raw])
@@ -43,20 +44,25 @@ def get_histo(in_file):
         raw_digits = wire[4] - baseline
         #maxima[wire_id, event-1 - event_ids[0]] = np.argmax(raw_digits)
 
-        res = get_gauss_fit(ticks, raw_digits, np.argmax(raw_digits))
-        amp = res.params['amplitude']
-        cen = res.params['center']
-        wid = res.params['sigma']
+        try:
+            res = get_gauss_fit(ticks, raw_digits, np.argmax(raw_digits))
+            amp = res.params['amplitude']
+            cen = res.params['center']
+            wid = res.params['sigma']
+        except:
+            wid = -9999.
+            cen = -9999.
 
-        maxima[wire_id, event - 1 - event_ids[0]] = cen
-        std_maxima[wire_id, event - 1 - event_ids[0]] = wid
+        idx = event - 1 - event_ids[0]
+        maxima[wire_id, idx] = cen
+        std_maxima[wire_id, idx] = wid
 
         if (previous_event != event):
-            print("Processing: {}/{}".format(event, event_ids[-1]))
+            print("[{}] Processing: {}/{}".format(mid, event, event_ids[-1]))
 
         previous_event = event
 
-    return [maxima, std_maxima]
+    return [maxima, std_maxima, event_ids[0]]
 
 
 try:
@@ -66,13 +72,12 @@ except:
 
 in_files = glob.glob(file_path + 'Rw*[0-3][0-9]*')
 
-#in_files = '/home/data/uboone/laser/7275/rwa/RwaData-7275-006.root'
+in_files = ['/home/data/uboone/laser/7275/rwa/RwaData-7275-006.root',
+            '/home/data/uboone/laser/7275/rwa/RwaData-7275-007.root']
 print(in_files)
-
-pool = mp.Pool(processes=1)
+pool = mp.Pool(processes=2)
 res = pool.map(get_histo, in_files)
 
-#res = get_histo(in_files)
 print(res)
 np.save('out/time-histo/histo-more-gauss.npy', res)
 print("saved file to: 'out/time-histo/histo-more-gauss.npy'")
