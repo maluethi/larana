@@ -4,7 +4,9 @@ import glob
 import multiprocessing as mp
 from lmfit import Model, Parameters
 from lmfit.models import GaussianModel
-import sys
+import os
+import argparse
+
 
 def gaussian(x, amp, cen, wid):
     "1-d gaussian: gaussian(x, amp, cen, wid)"
@@ -65,17 +67,23 @@ def get_histo(in_file):
     return [maxima, std_maxima, event_ids[0]]
 
 
-try:
-    file_path = sys.argv[1]
-except:
-    file_path = '/home/data/uboone/laser/7275/rwa/'
+parser = argparse.ArgumentParser(description='Little script to compute maximas in files')
+parser.add_argument('base_dir',  action="store", type=str, help='base directory')
+parser.add_argument('-n', action="store", type=int, default=1, help='number of processes')
+parser.add_argument('-s', action='store_true', default=False, dest='single', help='process single file')
+args = parser.parse_args()
+print(args)
+file_path = args.base_dir
+
+if not os.path.isdir(file_path):
+    raise FileNotFoundError("Path: {} not found".format(file_path))
 
 in_files = glob.glob(file_path + 'Rw*[0-3][0-9]*')
+if args.single:
+    in_files = [in_files[0]]
 
-in_files = ['/home/data/uboone/laser/7275/rwa/RwaData-7275-006.root',
-            '/home/data/uboone/laser/7275/rwa/RwaData-7275-007.root']
 print(in_files)
-pool = mp.Pool(processes=2)
+pool = mp.Pool(processes=args.n)
 res = pool.map(get_histo, in_files)
 
 print(res)
