@@ -6,7 +6,7 @@ from lmfit import Model, Parameters
 from lmfit.models import GaussianModel
 import os
 import argparse
-
+from functools import partial
 
 def gaussian(x, amp, cen, wid):
     "1-d gaussian: gaussian(x, amp, cen, wid)"
@@ -26,7 +26,7 @@ def get_gauss_fit(x, y, center_guess):
     return out
 
 
-def get_histo(in_file):
+def get_histo(in_file, only_max=False):
     mid = mp.current_process()._identity[0]
     print("[{}] Processing: {}".format(mid, in_file))
     raw = laru.read_raw(in_file)
@@ -44,20 +44,23 @@ def get_histo(in_file):
 
         baseline = np.mean(wire[4])
         raw_digits = wire[4] - baseline
-        #maxima[wire_id, event-1 - event_ids[0]] = np.argmax(raw_digits)
 
-        try:
-            res = get_gauss_fit(ticks, raw_digits, np.argmax(raw_digits))
-            amp = res.params['amplitude']
-            cen = res.params['center']
-            wid = res.params['sigma']
-        except:
-            wid = -9999.
-            cen = -9999.
+        if only_max:
+            maxima[wire_id, event-1 - event_ids[0]] = np.argmax(raw_digits[900:1200])
 
-        idx = event - 1 - event_ids[0]
-        maxima[wire_id, idx] = cen
-        std_maxima[wire_id, idx] = wid
+        else:
+            try:
+                res = get_gauss_fit(ticks, raw_digits, np.argmax(raw_digits))
+                amp = res.params['amplitude']
+                cen = res.params['center']
+                wid = res.params['sigma']
+            except:
+                wid = -9999.
+                cen = -9999.
+
+            idx = event - 1 - event_ids[0]
+            maxima[wire_id, idx] = cen
+            std_maxima[wire_id, idx] = wid
 
         if (previous_event != event):
             print("[{}] Processing: {}/{}".format(mid, event, event_ids[-1]))
@@ -71,8 +74,9 @@ parser = argparse.ArgumentParser(description='Little script to compute maximas i
 parser.add_argument('base_dir',  action="store", type=str, help='base directory')
 parser.add_argument('-n', action="store", type=int, default=1, help='number of processes')
 parser.add_argument('-s', action='store_true', default=False, dest='single', help='process single file')
+parser.add_argument('-m', action='store_true', default=False, dest='max', help='only calculate maxima, no gauss fits')
+
 args = parser.parse_args()
-print(args)
 file_path = args.base_dir
 
 if not os.path.isdir(file_path):
@@ -84,8 +88,10 @@ if args.single:
 
 print(in_files)
 pool = mp.Pool(processes=args.n)
-res = pool.map(get_histo, in_files)
 
-print(res)
-np.save('out/time-histo/histo-more-gauss.npy', res)
-print("saved file to: 'out/time-histo/histo-more-gauss.npy'")
+partial_hist = partial(get_histo, only_max=args.max)
+
+res = pool.map(partial_hist, in_files)
+
+np.save('out/time-histo/histo-more-maxima.npy', res)
+print("saved file to: 'out/time-histo/histo-more-maxima.npy'")
