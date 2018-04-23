@@ -31,22 +31,28 @@ def get_histo(in_file, only_max=False):
     print("[{}] Processing: {}".format(mid, in_file))
     raw = laru.read_raw(in_file)
 
+    sel_min = 900
+    sel_max = 1200
+
     event_ids = np.unique([wire[0] for wire in raw])
     #wire_ids = np.unique([wire[2] for wire in raw])
     previous_event = event_ids[0]
     maxima = np.zeros([3456, len(event_ids)])
+    maxima_amp = np.zeros([3456, len(event_ids)])
     std_maxima = np.zeros([3456, len(event_ids)])
     ticks = np.arange(0, len(raw[0][4]))
 
     for wire in raw:
         wire_id = wire[2]
         event = wire[0]
+        idx = event - 1 - event_ids[0]
 
         baseline = np.mean(wire[4])
         raw_digits = wire[4] - baseline
 
         if only_max:
-            maxima[wire_id, event-1 - event_ids[0]] = np.argmax(raw_digits[900:1200])
+            maxima[wire_id, idx] = np.argmax(raw_digits[sel_min:sel_max])
+            maxima_amp[wire_id, idx] = np.max(raw_digits[sel_min:sel_max])
 
         else:
             try:
@@ -57,21 +63,24 @@ def get_histo(in_file, only_max=False):
             except:
                 wid = -9999.
                 cen = -9999.
+                amp = -9999.
 
-            idx = event - 1 - event_ids[0]
+
             maxima[wire_id, idx] = cen
             std_maxima[wire_id, idx] = wid
+            maxima_amp[wire_id, idx] = amp
 
         if (previous_event != event):
             print("[{}] Processing: {}/{}".format(mid, event, event_ids[-1]))
 
         previous_event = event
 
-    return [maxima, std_maxima, event_ids[0]]
+    return [maxima, maxima_amp, std_maxima, event_ids[0]]
 
 
 parser = argparse.ArgumentParser(description='Little script to compute maximas in files')
 parser.add_argument('base_dir',  action="store", type=str, help='base directory')
+parser.add_argument('out_file',  action="store", type=str, help='output file name')
 parser.add_argument('-n', action="store", type=int, default=1, help='number of processes')
 parser.add_argument('-s', action='store_true', default=False, dest='single', help='process single file')
 parser.add_argument('-m', action='store_true', default=False, dest='max', help='only calculate maxima, no gauss fits')
@@ -93,5 +102,5 @@ partial_hist = partial(get_histo, only_max=args.max)
 
 res = pool.map(partial_hist, in_files)
 
-np.save('out/time-histo/histo-more-maxima.npy', res)
-print("saved file to: 'out/time-histo/histo-more-maxima.npy'")
+np.save('out/time-histo/{}'.format(args.out_file), res)
+print("saved file to: 'out/time-histo/{}'".format(args.out_file))
